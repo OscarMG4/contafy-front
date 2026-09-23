@@ -1,40 +1,50 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --cf-purple-500: #8b5cf6;
+  --cf-purple-600: #7c3aed;
+  --cf-purple-700: #6d28d9;
+  --cf-purple-900: #4c1d95;
+  --cf-black-950: #07070b;
+  --cf-black-900: #0b0b12;
+  --cf-black-850: #111119;
+  --cf-black-700: #1f1f2b;
+  --cf-white: #ffffff;
+  --cf-gray-50: #f7f7fb;
+  --cf-gray-100: #efeef5;
+  --cf-gray-400: #9b98ae;
+
+  --cf-bg: var(--cf-gray-50);
+  --cf-surface: var(--cf-white);
+  --cf-border: var(--cf-gray-100);
+  --cf-text: var(--cf-black-900);
+  --cf-text-muted: #6b6880;
+  --cf-gradient: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 55%, #4c1d95 100%);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html {
-  height: 100%;
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+[data-theme="dark"] {
+  --cf-bg: var(--cf-black-950);
+  --cf-surface: var(--cf-black-850);
+  --cf-border: var(--cf-black-700);
+  --cf-text: #f4f3f8;
+  --cf-text-muted: var(--cf-gray-400);
 }
 
 * {
   box-sizing: border-box;
-  padding: 0;
+}
+
+html,
+body {
   margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--cf-bg);
+  color: var(--cf-text);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -42,8 +52,17 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+::selection {
+  background: var(--cf-purple-600);
+  color: var(--cf-white);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--cf-purple-600) 35%, transparent);
+  border-radius: 8px;
 }

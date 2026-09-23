@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# contafy-front
 
-## Getting Started
+Frontend de Contafy · Next.js 16 (App Router, Turbopack) · React 19 · Ant Design 6 · React Query · Zustand · Axios.
 
-First, run the development server:
+## Puesta en marcha
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local   # NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+npm install
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Con el backend y su seeder: empresa `demo`, usuario `admin@contafy.test`, contraseña `password123`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Estructura
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/                    solo rutas (delgadas)
+│   ├── (auth)/             login, register · layout con panel de marca
+│   ├── (app)/              rutas privadas · layout con sidebar + header
+│   │   ├── dashboard/
+│   │   └── [...slug]/      placeholder de módulos aún no creados
+│   └── layout.tsx          providers + tema (cookie → sin parpadeo)
+├── proxy.ts                protección de rutas (antes "middleware")
+├── core/                   infraestructura transversal
+│   ├── config/             env, navigation (menú lateral)
+│   ├── http/               apiClient (Bearer + X-Tenant, 401 → login), ApiError
+│   ├── session/            cookies de sesión
+│   ├── theme/              paleta morado/negro/blanco, tema antd claro/oscuro
+│   └── providers/
+├── shared/                 UI y utilidades reutilizables (layout, ui, lib)
+└── modules/<modulo>/       un módulo por contexto del backend
+    ├── domain/             tipos y reglas puras
+    ├── infrastructure/     llamadas a la API
+    ├── application/        hooks (React Query) / stores
+    └── presentation/       componentes
+```
 
-## Learn More
+**Nuevo módulo:** crea `src/modules/<modulo>/…`, su página en `src/app/(app)/<ruta>/page.tsx` y agrégalo a `src/core/config/navigation.tsx`.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+El dashboard usa datos de ejemplo en `modules/dashboard/infrastructure/dashboard.api.ts`; reemplázalos por el endpoint real cuando exista.

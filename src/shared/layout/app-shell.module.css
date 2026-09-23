@@ -1,0 +1,109 @@
+.sider {
+  position: sticky !important;
+  top: 0;
+  height: 100vh;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.siderInner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  height: 68px;
+  padding: 0 22px;
+  color: #fff;
+}
+
+.menu {
+  flex: 1;
+  overflow-y: auto;
+  border-inline-end: none !important;
+  padding-top: 8px;
+}
+
+.upgrade {
+  margin: 14px;
+  padding: 16px;
+  border-radius: 14px;
+  color: #fff;
+  background:
+    radial-gradient(160px 90px at 100% 0%, rgba(196, 181, 253, 0.35), transparent 70%),
+    var(--cf-gradient);
+}
+
+.upgradeTitle {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.upgradeText {
+  margin: 4px 0 12px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.5;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 68px;
+  padding: 0 24px !important;
+  border-bottom: 1px solid var(--cf-border);
+  backdrop-filter: saturate(180%) blur(12px);
+}
+
+.search {
+  max-width: 360px;
+}
+
+.content {
+  padding: 28px;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.userButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.userButton:hover {
+  background: color-mix(in srgb, var(--cf-purple-600) 8%, transparent);
+}
+
+.userMeta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+@media (max-width: 767px) {
+  .content {
+    padding: 18px;
+  }
+
+  .header {
+    padding: 0 14px !important;
+  }
+
+  .search,
+  .userMeta {
+    display: none !important;
+  }
+}
