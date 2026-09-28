@@ -1,31 +1,59 @@
 :root {
+  --cf-purple-400: #a78bfa;
   --cf-purple-500: #8b5cf6;
   --cf-purple-600: #7c3aed;
   --cf-purple-700: #6d28d9;
   --cf-purple-900: #4c1d95;
-  --cf-black-950: #07070b;
-  --cf-black-900: #0b0b12;
-  --cf-black-850: #111119;
-  --cf-black-700: #1f1f2b;
+  --cf-ink: #0e1116;
+  --cf-ink-soft: #171b22;
+  --cf-black-950: #0a0a0a;
+  --cf-black-900: #12151a;
+  --cf-black-850: #181c24;
+  --cf-black-700: #2a303b;
   --cf-white: #ffffff;
-  --cf-gray-50: #f7f7fb;
-  --cf-gray-100: #efeef5;
-  --cf-gray-400: #9b98ae;
+  --cf-mist: #f3f4f8;
+  --cf-mist-deep: #e8eaf0;
+  --cf-gray-50: #f3f4f8;
+  --cf-gray-100: #e8eaf0;
+  --cf-gray-200: #d3d7e0;
+  --cf-gray-400: #7b8494;
 
-  --cf-bg: var(--cf-gray-50);
+  --cf-bg: var(--cf-mist);
   --cf-surface: var(--cf-white);
-  --cf-border: var(--cf-gray-100);
-  --cf-text: var(--cf-black-900);
-  --cf-text-muted: #6b6880;
-  --cf-gradient: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 55%, #4c1d95 100%);
+  --cf-surface-muted: #f5f6f9;
+  --cf-border: #e6e8ee;
+  --cf-border-strong: var(--cf-gray-200);
+  --cf-text: #12151a;
+  --cf-text-muted: #5c6573;
+  --cf-accent: var(--cf-purple-600);
+  --cf-accent-soft: color-mix(in srgb, var(--cf-purple-600) 10%, transparent);
+  --cf-shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 2px 8px rgba(16, 24, 40, 0.04);
+  --cf-gradient: linear-gradient(145deg, #6d28d9 0%, #312e81 55%, #0e1116 100%);
+  --cf-radius: 10px;
+  --cf-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --cf-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme="dark"] {
-  --cf-bg: var(--cf-black-950);
-  --cf-surface: var(--cf-black-850);
-  --cf-border: var(--cf-black-700);
-  --cf-text: #f4f3f8;
-  --cf-text-muted: var(--cf-gray-400);
+  --cf-bg: #1c2030;
+  --cf-surface: #262b3c;
+  --cf-surface-muted: #2c3344;
+  --cf-border: #3e465a;
+  --cf-border-strong: #525b72;
+  --cf-text: #f4f5f8;
+  --cf-text-muted: #b4bbc9;
+  --cf-accent: #a78bfa;
+  --cf-accent-soft: rgba(167, 139, 250, 0.2);
+  --cf-shadow-card:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 1px 2px rgba(0, 0, 0, 0.12),
+    0 10px 28px rgba(12, 14, 24, 0.22);
+  --cf-gray-50: #2c3344;
+  --cf-gray-100: #3e465a;
+  --cf-gray-200: #525b72;
+  --cf-gray-400: #949cb0;
+  --cf-purple-600: #a78bfa;
+  color-scheme: dark;
 }
 
 * {
@@ -40,11 +68,24 @@ body {
 }
 
 body {
-  background: var(--cf-bg);
+  background:
+    radial-gradient(ellipse 70% 45% at 100% -10%, color-mix(in srgb, var(--cf-accent) 8%, transparent), transparent 55%),
+    linear-gradient(180deg, #f7f8fc 0%, var(--cf-bg) 42%),
+    var(--cf-bg);
+  background-attachment: fixed;
   color: var(--cf-text);
-  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s var(--cf-ease), color 0.2s var(--cf-ease);
+}
+
+[data-theme="dark"] body {
+  background:
+    radial-gradient(ellipse 80% 50% at 0% 0%, rgba(167, 139, 250, 0.07), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(99, 102, 241, 0.05), transparent 50%),
+    var(--cf-bg);
+  background-attachment: fixed;
 }
 
 a {
@@ -53,16 +94,157 @@ a {
 }
 
 ::selection {
-  background: var(--cf-purple-600);
-  color: var(--cf-white);
+  background: color-mix(in srgb, var(--cf-accent) 24%, transparent);
+  color: var(--cf-text);
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--cf-purple-600) 35%, transparent);
-  border-radius: 8px;
+  background: var(--cf-gray-200);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Cards — relieve contable sobrio */
+.ant-card {
+  border: 1px solid var(--cf-border) !important;
+  box-shadow: var(--cf-shadow-card) !important;
+  transition:
+    transform 0.28s var(--cf-ease),
+    box-shadow 0.28s var(--cf-ease),
+    border-color 0.28s var(--cf-ease) !important;
+}
+
+.ant-card .ant-card-head-title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ant-btn-primary {
+  box-shadow: none !important;
+  transition: transform 0.2s var(--cf-ease), filter 0.2s var(--cf-ease) !important;
+}
+
+.ant-btn-primary:not(:disabled):hover {
+  filter: brightness(1.04);
+}
+
+.ant-btn-primary:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+/* Tablas: números tabulares (asientos / montos) */
+.ant-table {
+  font-variant-numeric: tabular-nums;
+}
+
+.ant-table-tbody > tr {
+  transition: background-color 0.18s var(--cf-ease) !important;
+}
+
+.ant-menu-dark .ant-menu-item,
+.ant-menu-dark .ant-menu-submenu-title {
+  transition:
+    background 0.2s var(--cf-ease),
+    color 0.2s var(--cf-ease),
+    padding 0.2s var(--cf-ease) !important;
+}
+
+/* Barra de filtros sobre tablas */
+.ant-card .ant-table-wrapper .ant-table-pagination.ant-pagination {
+  margin: 20px 24px !important;
+}
+
+.ant-table-wrapper .ant-table-cell:first-child {
+  padding-inline-start: 28px !important;
+}
+
+.ant-table-wrapper .ant-table-cell:last-child {
+  padding-inline-end: 28px !important;
+}
+
+/* Empty states */
+.ant-empty {
+  margin-block: 16px !important;
+}
+
+.ant-empty .ant-empty-description {
+  margin-top: 12px !important;
+  color: var(--cf-text-muted);
+}
+
+.ant-empty .ant-empty-footer {
+  margin-top: 20px !important;
+}
+
+/* Formularios */
+.ant-form-item-label > label {
+  height: auto !important;
+  font-weight: 500;
+}
+
+/* Tags con aire */
+.ant-tag {
+  padding-inline: 8px;
+  line-height: 22px;
+}
+
+/* Drawers */
+.ant-drawer .ant-drawer-content {
+  animation: cfDrawerIn 0.35s var(--cf-ease-out) both;
+}
+
+.ant-drawer .ant-drawer-header {
+  padding: 20px 28px !important;
+}
+
+.ant-drawer .ant-drawer-body {
+  padding: 28px !important;
+}
+
+.ant-drawer .ant-drawer-footer {
+  padding: 16px 28px !important;
+}
+
+@keyframes cfDrawerIn {
+  from {
+    opacity: 0.92;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Modales */
+.ant-modal .ant-modal-footer {
+  margin-top: 24px !important;
+}
+
+.ant-modal .ant-modal-footer .ant-btn + .ant-btn {
+  margin-inline-start: 12px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .ant-drawer .ant-drawer-content {
+    animation: none;
+  }
 }

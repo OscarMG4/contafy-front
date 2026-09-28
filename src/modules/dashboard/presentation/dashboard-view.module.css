@@ -1,0 +1,21 @@
+.section {
+  animation: cfSectionIn 0.5s var(--cf-ease) both;
+  animation-delay: calc(var(--cf-stagger, 0) * 45ms);
+}
+
+@keyframes cfSectionIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section {
+    animation: none;
+  }
+}

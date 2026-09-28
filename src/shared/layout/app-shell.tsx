@@ -7,7 +7,6 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   MoonOutlined,
-  RocketOutlined,
   SearchOutlined,
   SunOutlined,
 } from "@ant-design/icons";
@@ -15,10 +14,13 @@ import { Badge, Button, Flex, Input, Layout, Menu, Tooltip, type MenuProps } fro
 
 import { NAVIGATION, type NavItem } from "@/core/config/navigation";
 import { useThemeMode } from "@/core/theme/theme-mode";
+import { CompanySwitcher } from "@/modules/companies/presentation/company-switcher";
+import { NoCompanyAlert } from "@/modules/companies/presentation/no-company-alert";
 import { Logo } from "@/shared/ui/logo";
 
 import styles from "./app-shell.module.css";
 import { UserMenu } from "./user-menu";
+import { PageTransition } from "@/shared/ui/page-transition";
 
 type MenuItem = Required<MenuProps>["items"][number];
 
@@ -76,53 +78,47 @@ export function AppShell({ children }: { children: ReactNode }) {
             defaultOpenKeys={collapsed ? [] : parentKeysOf(pathname)}
             onClick={({ key }) => router.push(key)}
           />
-
-          {!collapsed && (
-            <div className={styles.upgrade}>
-              <div className={styles.upgradeTitle}>
-                <RocketOutlined /> Plan Pro
-              </div>
-              <p className={styles.upgradeText}>Multiempresa, facturación electrónica y reportes avanzados.</p>
-              <Button size="small" block style={{ fontWeight: 600 }}>
-                Mejorar plan
-              </Button>
-            </div>
-          )}
         </div>
       </Layout.Sider>
 
       <Layout>
         <Layout.Header className={styles.header}>
-          <Flex align="center" gap={12} style={{ flex: 1 }}>
-            <Button
-              type="text"
-              aria-label="Alternar menú"
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={() => setCollapsed((value) => !value)}
-            />
-            <Input
-              className={styles.search}
-              prefix={<SearchOutlined />}
-              placeholder="Buscar asientos, cuentas, clientes…"
-              variant="filled"
-              allowClear
-            />
-          </Flex>
+          <div className={styles.rail}>
+            <Flex align="center" gap={16} style={{ flex: 1, minWidth: 0 }}>
+              <Button
+                type="text"
+                aria-label="Alternar menú"
+                icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                onClick={() => setCollapsed((value) => !value)}
+              />
+              <CompanySwitcher />
+              <Input
+                className={styles.search}
+                prefix={<SearchOutlined />}
+                placeholder="Buscar asientos, cuentas, clientes…"
+                variant="filled"
+                allowClear
+              />
+            </Flex>
 
-          <Flex align="center" gap={6}>
-            <Tooltip title={isDark ? "Modo claro" : "Modo oscuro"}>
-              <Button type="text" shape="circle" icon={isDark ? <SunOutlined /> : <MoonOutlined />} onClick={toggle} />
-            </Tooltip>
-            <Tooltip title="Notificaciones">
-              <Badge dot offset={[-6, 6]}>
-                <Button type="text" shape="circle" icon={<BellOutlined />} />
-              </Badge>
-            </Tooltip>
-            <UserMenu />
-          </Flex>
+            <Flex align="center" gap={8}>
+              <Tooltip title={isDark ? "Modo claro" : "Modo oscuro"}>
+                <Button type="text" icon={isDark ? <SunOutlined /> : <MoonOutlined />} onClick={toggle} />
+              </Tooltip>
+              <Tooltip title="Notificaciones">
+                <Badge dot offset={[-4, 4]}>
+                  <Button type="text" icon={<BellOutlined />} />
+                </Badge>
+              </Tooltip>
+              <UserMenu />
+            </Flex>
+          </div>
         </Layout.Header>
 
-        <Layout.Content className={styles.content}>{children}</Layout.Content>
+        <Layout.Content className={styles.content}>
+          <NoCompanyAlert />
+          <PageTransition>{children}</PageTransition>
+        </Layout.Content>
       </Layout>
     </Layout>
   );

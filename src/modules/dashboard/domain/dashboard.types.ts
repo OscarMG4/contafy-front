@@ -4,12 +4,13 @@ export interface Kpi {
   key: KpiKey;
   label: string;
   value: number;
-  /** Variación porcentual respecto al periodo anterior. */
-  change: number;
+  /** Variación vs. mes anterior. `null` si aún no hay periodo comparable. */
+  change: number | null;
 }
 
 export interface CashflowPoint {
   month: string;
+  period: string;
   income: number;
   expenses: number;
 }
@@ -23,8 +24,26 @@ export interface JournalEntrySummary {
   status: "posted" | "draft";
 }
 
+export interface OnboardingStep {
+  key: string;
+  title: string;
+  done: boolean;
+  href: string | null;
+}
+
+export interface ExchangeRateSnapshot {
+  currency: string;
+  date: string;
+  buy: string;
+  sell: string;
+  source: string;
+}
+
 export interface DashboardSummary {
   kpis: Kpi[];
   cashflow: CashflowPoint[];
   recentEntries: JournalEntrySummary[];
+  onboarding: OnboardingStep[];
+  exchangeRate: ExchangeRateSnapshot | null;
+  hasFinancialActivity: boolean;
 }

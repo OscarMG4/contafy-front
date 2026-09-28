@@ -1,14 +1,9 @@
-import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
-import { RegisterForm } from "@/modules/auth/presentation/register-form";
+export const metadata: Metadata = { title: "Iniciar sesión" };
 
-export const metadata: Metadata = { title: "Registrar empresa" };
-
+/** El alta de estudios solo se hace desde el CRM (backoffice). */
 export default function RegisterPage() {
-  return (
-    <Suspense>
-      <RegisterForm />
-    </Suspense>
-  );
+  redirect("/login");
 }

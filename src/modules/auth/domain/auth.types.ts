@@ -6,6 +6,7 @@ export interface User {
   email: string;
   role: UserRole;
   tenant_id: string;
+  tenant_name?: string | null;
   created_at: string;
 }
 
@@ -18,24 +19,26 @@ export interface Tenant {
 export interface AuthSession {
   user: User;
   token: string;
+  refresh_token?: string;
+  expires_in?: number;
+  token_type?: string;
 }
 
-export interface RegisteredCompany extends AuthSession {
-  tenant: Tenant;
+export interface TenantSelection {
+  requires_tenant_selection: true;
+  tenants: Tenant[];
+}
+
+export type LoginResult = AuthSession | TenantSelection;
+
+export function isTenantSelection(result: LoginResult): result is TenantSelection {
+  return "requires_tenant_selection" in result && result.requires_tenant_selection === true;
 }
 
 export interface LoginInput {
-  tenantId: string;
   email: string;
   password: string;
-}
-
-export interface RegisterCompanyInput {
-  companyName: string;
-  tenantId: string;
-  name: string;
-  email: string;
-  password: string;
+  tenantId?: string;
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {

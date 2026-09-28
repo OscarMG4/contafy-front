@@ -1,10 +1,11 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { Card, Flex, Tag, Typography } from "antd";
 
 import { formatMoney, formatPercent } from "@/shared/lib/format";
 
 import type { Kpi } from "../domain/dashboard.types";
+import styles from "./kpi-card.module.css";
 
 interface KpiCardProps {
   kpi: Kpi;
@@ -12,56 +13,57 @@ interface KpiCardProps {
   /** true cuando una variación positiva es mala (p. ej. gastos). */
   inverse?: boolean;
   highlighted?: boolean;
+  /** Índice para stagger de entrada (0…n). */
+  index?: number;
 }
 
-export function KpiCard({ kpi, icon, inverse = false, highlighted = false }: KpiCardProps) {
-  const isGood = inverse ? kpi.change <= 0 : kpi.change >= 0;
+export function KpiCard({ kpi, icon, inverse = false, highlighted = false, index = 0 }: KpiCardProps) {
+  const hasChange = kpi.change !== null;
+  const isGood = hasChange ? (inverse ? kpi.change! <= 0 : kpi.change! >= 0) : true;
 
   return (
     <Card
       variant="borderless"
-      style={
-        highlighted
-          ? { background: "var(--cf-gradient)", color: "#fff", boxShadow: "0 18px 40px -18px rgba(109,40,217,.7)" }
-          : undefined
-      }
+      className={styles.card}
+      style={{ ["--cf-stagger" as string]: String(index) } as CSSProperties}
     >
-      <Flex justify="space-between" align="flex-start">
-        <Typography.Text style={{ color: highlighted ? "rgba(255,255,255,.8)" : undefined }} type={highlighted ? undefined : "secondary"}>
+      <Flex justify="space-between" align="center" gap={16}>
+        <Typography.Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>
           {kpi.label}
         </Typography.Text>
         <span
+          className={styles.icon}
           style={{
-            display: "grid",
-            placeItems: "center",
-            width: 38,
-            height: 38,
-            borderRadius: 12,
-            fontSize: 17,
-            color: highlighted ? "#fff" : "var(--cf-purple-600)",
-            background: highlighted ? "rgba(255,255,255,.16)" : "color-mix(in srgb, var(--cf-purple-600) 10%, transparent)",
+            color: highlighted ? "var(--cf-accent)" : "var(--cf-text-muted)",
+            background: highlighted ? "var(--cf-accent-soft)" : "var(--cf-surface-muted)",
           }}
         >
           {icon}
         </span>
       </Flex>
 
-      <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em", margin: "10px 0 8px", color: highlighted ? "#fff" : undefined }}>
-        {formatMoney(kpi.value)}
-      </div>
+      <div className={styles.value}>{formatMoney(kpi.value)}</div>
 
-      <Flex align="center" gap={6}>
-        <Tag
-          variant="filled"
-          color={highlighted ? undefined : isGood ? "success" : "error"}
-          style={highlighted ? { background: "rgba(255,255,255,.18)", color: "#fff" } : undefined}
-          icon={kpi.change >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
-        >
-          {formatPercent(kpi.change)}
-        </Tag>
-        <Typography.Text style={{ fontSize: 12, color: highlighted ? "rgba(255,255,255,.7)" : undefined }} type={highlighted ? undefined : "secondary"}>
-          vs. mes anterior
-        </Typography.Text>
+      <Flex align="center" gap={10} wrap>
+        {hasChange ? (
+          <>
+            <Tag
+              variant="filled"
+              color={isGood ? "success" : "error"}
+              icon={kpi.change! >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
+              style={{ marginInlineEnd: 0 }}
+            >
+              {formatPercent(kpi.change!)}
+            </Tag>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              vs. mes anterior
+            </Typography.Text>
+          </>
+        ) : (
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            Sin movimiento este mes
+          </Typography.Text>
+        )}
       </Flex>
     </Card>
   );

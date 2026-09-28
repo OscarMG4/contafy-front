@@ -1,14 +1,13 @@
-/** Debe coincidir con Contafy\Contexts\Tenancy\Domain\TenantId en el backend. */
-export const TENANT_ID_PATTERN = /^[a-z][a-z0-9-]{2,39}$/;
+/** Identificador del tenant: UUID v4 o slug legado. */
+export const TENANT_ID_PATTERN =
+  /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|[a-z][a-z0-9-]{2,39})$/i;
 
-export function tenantIdFromCompanyName(companyName: string): string {
-  return companyName
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\b(s\.?a\.?c?|s\.?r\.?l|e\.?i\.?r\.?l)\.?\b/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^[^a-z]+/, "")
-    .replace(/-+$/g, "")
-    .slice(0, 40);
+export const LAST_TENANT_KEY = "contafy_last_tenant";
+
+export function normalizeTenantId(value: string): string {
+  const trimmed = value.trim();
+  if (/^[0-9a-f-]{36}$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+  return trimmed.toLowerCase();
 }

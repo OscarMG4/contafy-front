@@ -1,26 +1,28 @@
 import type { ReactNode } from "react";
 import { Flex, Typography } from "antd";
 
+import styles from "./page-header.module.css";
+
 interface PageHeaderProps {
   title: ReactNode;
   subtitle?: ReactNode;
   actions?: ReactNode;
+  eyebrow?: ReactNode;
 }
 
-export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, actions, eyebrow }: PageHeaderProps) {
   return (
-    <Flex justify="space-between" align="flex-end" wrap gap={16} style={{ marginBottom: 24 }}>
-      <div>
-        <Typography.Title level={3} style={{ margin: 0, fontWeight: 800, letterSpacing: "-0.03em" }}>
-          {title}
-        </Typography.Title>
-        {subtitle && (
-          <Typography.Text type="secondary" style={{ fontSize: 14 }}>
-            {subtitle}
-          </Typography.Text>
-        )}
-      </div>
-      {actions && <Flex gap={8}>{actions}</Flex>}
-    </Flex>
+    <div className={styles.wrap}>
+      <Flex justify="space-between" align="flex-start" wrap gap={20} className={styles.row}>
+        <div className={styles.copy}>
+          {eyebrow && <div className={styles.eyebrow}>{eyebrow}</div>}
+          <Typography.Title level={3} className={styles.title}>
+            {title}
+          </Typography.Title>
+          {subtitle && <Typography.Text className={styles.subtitle}>{subtitle}</Typography.Text>}
+        </div>
+        {actions && <Flex gap={12} wrap className={styles.actions}>{actions}</Flex>}
+      </Flex>
+    </div>
   );
 }

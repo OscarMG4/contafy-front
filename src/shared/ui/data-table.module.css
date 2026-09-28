@@ -1,0 +1,91 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 16px;
+  padding: 18px 22px;
+  background: var(--cf-surface);
+  border: 1px solid var(--cf-border);
+  border-radius: 12px;
+  box-shadow: var(--cf-shadow-card);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.filters > :global(.ant-select) {
+  min-width: 170px;
+}
+
+.filters > :global(.ant-picker) {
+  min-width: 190px;
+}
+
+.search {
+  flex: 1 1 280px;
+  min-width: 240px;
+}
+
+.action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-inline-start: auto;
+}
+
+.tableCard {
+  background: var(--cf-surface);
+  border: 1px solid var(--cf-border);
+  border-radius: 12px;
+  box-shadow: var(--cf-shadow-card);
+  overflow: hidden;
+}
+
+.table :global(.ant-table) {
+  background: transparent;
+}
+
+.table :global(.ant-table-thead > tr > th) {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.table :global(.ant-table-pagination.ant-pagination) {
+  margin: 0 !important;
+  padding: 16px 24px;
+  border-top: 1px solid var(--cf-border);
+}
+
+@media (max-width: 640px) {
+  .toolbar {
+    padding: 16px;
+  }
+
+  .filters,
+  .action {
+    width: 100%;
+  }
+
+  .filters > *,
+  .search,
+  .action > * {
+    flex: 1 1 100%;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .action {
+    margin-inline-start: 0;
+  }
+}

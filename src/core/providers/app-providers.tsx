@@ -10,6 +10,7 @@ import "dayjs/locale/es";
 
 import { buildAntdTheme, type ThemeMode } from "@/core/theme/antd-theme";
 import { ThemeModeProvider, useThemeMode } from "@/core/theme/theme-mode";
+import { appFormConfig } from "@/shared/lib/form-config";
 
 dayjs.locale("es");
 
@@ -17,7 +18,7 @@ function AntdConfig({ children }: { children: ReactNode }) {
   const { mode } = useThemeMode();
 
   return (
-    <ConfigProvider theme={buildAntdTheme(mode)} locale={esES} componentSize="middle">
+    <ConfigProvider theme={buildAntdTheme(mode)} locale={esES} componentSize="middle" form={appFormConfig}>
       <AntdApp>{children}</AntdApp>
     </ConfigProvider>
   );

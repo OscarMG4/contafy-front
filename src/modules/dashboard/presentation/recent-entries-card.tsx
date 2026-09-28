@@ -1,4 +1,4 @@
-import { Button, Card, Table, Tag, Typography, type TableProps } from "antd";
+import { Button, Card, Empty, Table, Tag, Typography, type TableProps } from "antd";
 import dayjs from "dayjs";
 
 import { formatMoney } from "@/shared/lib/format";
@@ -42,10 +42,26 @@ export function RecentEntriesCard({ data, loading }: { data: JournalEntrySummary
     <Card
       variant="borderless"
       title="Últimos asientos"
-      extra={<Button type="link">Ver todos</Button>}
-      styles={{ body: { paddingTop: 0 } }}
+      extra={data.length > 0 ? <Button type="link">Ver todos</Button> : null}
+      styles={{ body: { padding: 0 } }}
     >
-      <Table rowKey="id" columns={columns} dataSource={data} loading={loading} pagination={false} size="middle" />
+      <Table
+        rowKey="id"
+        columns={columns}
+        dataSource={data}
+        loading={loading}
+        pagination={false}
+        size="middle"
+        locale={{
+          emptyText: (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="Aún no hay asientos contables. Aparecerán al registrar compras y otros movimientos."
+              style={{ paddingBlock: 24 }}
+            />
+          ),
+        }}
+      />
     </Card>
   );
 }

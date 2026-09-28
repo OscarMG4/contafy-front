@@ -3,6 +3,29 @@
   top: 0;
   height: 100vh;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, #12151a 0%, #0e1116 100%) !important;
+}
+
+[data-theme="dark"] .sider {
+  background:
+    linear-gradient(180deg, rgba(167, 139, 250, 0.06) 0%, transparent 28%),
+    linear-gradient(180deg, #1c2130 0%, #171b28 100%) !important;
+  border-right-color: #31384a;
+}
+
+[data-theme="dark"] .header {
+  background: color-mix(in srgb, var(--cf-surface) 94%, transparent) !important;
+  border-bottom-color: color-mix(in srgb, var(--cf-border) 80%, transparent);
+}
+
+.sider::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: linear-gradient(180deg, #a78bfa 0%, transparent 55%);
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 .siderInner {
@@ -14,96 +37,185 @@
 .brand {
   display: flex;
   align-items: center;
-  height: 68px;
+  height: 72px;
   padding: 0 22px;
   color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: padding 0.25s var(--cf-ease);
 }
 
 .menu {
   flex: 1;
   overflow-y: auto;
   border-inline-end: none !important;
-  padding-top: 8px;
-}
-
-.upgrade {
-  margin: 14px;
-  padding: 16px;
-  border-radius: 14px;
-  color: #fff;
-  background:
-    radial-gradient(160px 90px at 100% 0%, rgba(196, 181, 253, 0.35), transparent 70%),
-    var(--cf-gradient);
-}
-
-.upgradeTitle {
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.upgradeText {
-  margin: 4px 0 12px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.78);
-  line-height: 1.5;
+  padding: 16px 0 12px;
+  background: transparent !important;
 }
 
 .header {
   position: sticky;
   top: 0;
   z-index: 10;
+  height: 72px;
+  padding: 0 !important;
+  line-height: 72px;
+  border-bottom: 1px solid var(--cf-border);
+  background: color-mix(in srgb, var(--cf-surface) 88%, transparent) !important;
+  backdrop-filter: blur(12px) saturate(1.15);
+  transition: border-color 0.2s var(--cf-ease), background 0.2s var(--cf-ease);
+}
+
+/* Misma “riel” que el content: header y páginas alineados */
+.rail {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  height: 68px;
-  padding: 0 24px !important;
-  border-bottom: 1px solid var(--cf-border);
-  backdrop-filter: saturate(180%) blur(12px);
+  gap: 20px;
+  width: 100%;
+  max-width: 1280px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 40px;
 }
 
 .search {
-  max-width: 360px;
+  max-width: 320px;
+  flex: 1;
+  transition: max-width 0.25s var(--cf-ease), opacity 0.2s var(--cf-ease);
 }
 
 .content {
-  padding: 28px;
-  max-width: 1440px;
+  position: relative;
+  padding: 44px 40px 56px;
+  max-width: 1280px;
   width: 100%;
   margin: 0 auto;
+  min-height: calc(100vh - 72px);
+}
+
+/* Rejilla de libro muy tenue en el área de trabajo */
+.content::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image:
+    linear-gradient(var(--cf-text) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cf-text) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 20%, #000 20%, transparent 75%);
+}
+
+[data-theme="dark"] .content::before {
+  opacity: 0.04;
 }
 
 .userButton {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 8px 4px 4px;
-  border-radius: 999px;
+  gap: 12px;
+  padding: 6px 10px 6px 6px;
+  border-radius: var(--cf-radius);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.15s var(--cf-ease), transform 0.2s var(--cf-ease);
 }
 
 .userButton:hover {
-  background: color-mix(in srgb, var(--cf-purple-600) 8%, transparent);
+  background: var(--cf-gray-100);
+}
+
+.userButton:active {
+  transform: scale(0.98);
+}
+
+[data-theme="dark"] .userButton:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .userMeta {
   display: flex;
   flex-direction: column;
-  line-height: 1.2;
+  gap: 2px;
+  line-height: 1.35;
+  min-width: 0;
+  max-width: 168px;
+}
+
+/* —— Pantallas grandes —— */
+@media (min-width: 1440px) {
+  .rail,
+  .content {
+    max-width: 1440px;
+    padding-inline: 48px;
+  }
+
+  .content {
+    padding-block: 48px 64px;
+  }
+
+  .search {
+    max-width: 380px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .rail,
+  .content {
+    max-width: 1600px;
+    padding-inline: 56px;
+  }
+
+  .search {
+    max-width: 420px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .rail,
+  .content {
+    max-width: 1760px;
+    padding-inline: 64px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .search {
+    display: none !important;
+  }
 }
 
 @media (max-width: 767px) {
+  .rail {
+    padding: 0 16px;
+    max-width: none;
+  }
+
   .content {
-    padding: 18px;
+    padding: 24px 18px 32px;
+    max-width: none;
   }
 
-  .header {
-    padding: 0 14px !important;
+  .content::before {
+    display: none;
   }
 
-  .search,
+  .search {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
   .userMeta {
     display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .userButton,
+  .header,
+  .brand,
+  .search {
+    transition: none;
   }
 }

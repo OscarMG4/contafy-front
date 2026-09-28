@@ -1,60 +1,57 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { BankOutlined, LineChartOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
+import { MoonOutlined, SunOutlined } from "@ant-design/icons";
+import { Button, Tooltip } from "antd";
 
+import { useThemeMode } from "@/core/theme/theme-mode";
 import { Logo } from "@/shared/ui/logo";
 
+import { AuthLedgerArt } from "./auth-ledger-art";
 import styles from "./auth-shell.module.css";
 
-const FEATURES = [
-  { icon: <LineChartOutlined />, text: "Reportes financieros en tiempo real" },
-  { icon: <BankOutlined />, text: "Conciliación bancaria automatizada" },
-  { icon: <SafetyCertificateOutlined />, text: "Datos aislados y cifrados por empresa" },
-];
-
-const BAR_HEIGHTS = [38, 54, 46, 70, 62, 84, 100];
-
 export function AuthShell({ children }: { children: ReactNode }) {
+  const { isDark, toggle } = useThemeMode();
+
   return (
     <div className={styles.shell}>
-      <aside className={styles.brand}>
-        <div className={styles.brandContent}>
-          <Logo size={38} color="#fff" />
-
-          <h1 className={styles.headline}>
-            La contabilidad de tu empresa, <span>simple y en la nube.</span>
-          </h1>
-          <p className={styles.subtitle}>
-            Centraliza ventas, compras, bancos e impuestos en una sola plataforma diseñada para equipos contables
-            modernos.
-          </p>
-
-          <ul className={styles.features}>
-            {FEATURES.map((feature) => (
-              <li key={feature.text}>
-                <span className={styles.featureIcon}>{feature.icon}</span>
-                {feature.text}
-              </li>
-            ))}
-          </ul>
-
-          <div className={styles.glassCard}>
-            <div className={styles.glassLabel}>Utilidad neta · últimos 7 meses</div>
-            <div className={styles.glassValue}>S/ 248,930.00</div>
-            <div className={styles.bars}>
-              {BAR_HEIGHTS.map((height, index) => (
-                <span key={index} style={{ height: `${height}%` }} />
-              ))}
-            </div>
-          </div>
+      <aside className={styles.brand} aria-hidden={false}>
+        <div className={styles.atmosphere} aria-hidden>
+          <div className={styles.ledger} />
+          <div className={styles.orbA} />
+          <div className={styles.orbB} />
+          <div className={styles.wash} />
         </div>
 
-        <div className={styles.footer}>© {new Date().getFullYear()} Contafy. Todos los derechos reservados.</div>
+        <div className={styles.brandStack}>
+          <div className={styles.brandContent}>
+            <Logo size={40} color="#fff" />
+            <p className={styles.brandMark}>Contafy</p>
+            <h1 className={styles.headline}>
+              El libro de tu estudio,
+              <em> siempre al día.</em>
+            </h1>
+            <p className={styles.subtitle}>
+              Un solo panel para clientes, compras valorizadas y cierre contable en el Perú.
+            </p>
+          </div>
+          <AuthLedgerArt className={styles.art} />
+        </div>
+
+        <div className={styles.footer}>© {new Date().getFullYear()} Contafy</div>
       </aside>
 
       <main className={styles.formSide}>
-        <div className={styles.formContainer}>
+        <Tooltip title={isDark ? "Modo claro" : "Modo oscuro"}>
+          <Button
+            type="text"
+            className={styles.themeToggle}
+            icon={isDark ? <SunOutlined /> : <MoonOutlined />}
+            onClick={toggle}
+            aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
+          />
+        </Tooltip>
+        <div className={styles.formPanel}>
           <div className={styles.mobileLogo}>
             <Logo size={36} />
           </div>
