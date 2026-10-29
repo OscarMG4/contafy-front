@@ -23,6 +23,7 @@ import {
 import dayjs from "dayjs";
 import Link from "next/link";
 
+import { useCurrentUser } from "@/modules/auth/application/use-auth";
 import { useTreasuryAccounts } from "@/modules/treasury/application/use-treasury";
 import { PAYMENT_METHOD_OPTIONS, type PaymentMethod } from "@/modules/treasury/domain/treasury.types";
 
@@ -41,6 +42,7 @@ import {
   type Purchase,
   type PurchaseInstallment,
 } from "../domain/purchase.types";
+import { AttachmentsPanel } from "./attachments-panel";
 import { formatAmount, formatCurrency, round2 } from "./document/document-model";
 
 interface PurchaseDetailDrawerProps {
@@ -103,6 +105,8 @@ export function PurchaseDetailDrawer({ purchaseId, open, onClose, onAnnul }: Pur
   const titlePrefix = isExpense ? "Gasto" : isAdditionalCost ? "Costo adicional" : "Compra";
   const currency = purchase?.currency ?? "PEN";
   const canPay = purchase?.status === "registered" && purchase.payment_status !== "paid";
+  const { data: user } = useCurrentUser();
+  const canEditFiles = purchase?.status !== "annulled" && ["owner", "admin", "accountant"].includes(user?.role ?? "");
 
   const payable = Number(purchase?.charges?.payable ?? purchase?.totals.total ?? 0);
   const paid = round2((payments ?? []).reduce((acc, p) => acc + Number(p.amount), 0));
@@ -592,6 +596,11 @@ export function PurchaseDetailDrawer({ purchaseId, open, onClose, onAnnul }: Pur
               </Flex>
             </Form>
           )}
+
+          <Typography.Text strong style={{ display: "block", margin: "16px 0 8px" }}>
+            Archivos
+          </Typography.Text>
+          <AttachmentsPanel purchaseId={purchase.id} pendingFiles={[]} onPendingFilesChange={() => {}} readOnly={!canEditFiles} />
         </>
       )}
     </Drawer>
