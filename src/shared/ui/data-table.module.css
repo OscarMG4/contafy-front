@@ -1,19 +1,21 @@
+/* Barra de herramientas y tabla forman una sola tarjeta (capa 2 sobre el panel) */
 .root {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  background: var(--cf-surface);
+  border: 1px solid var(--cf-border);
+  border-radius: var(--cf-radius-card);
+  box-shadow: var(--cf-highlight), var(--cf-shadow-card);
+  overflow: hidden;
 }
 
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 14px 16px;
-  padding: 18px 22px;
-  background: var(--cf-surface);
-  border: 1px solid var(--cf-border);
-  border-radius: 12px;
-  box-shadow: var(--cf-shadow-card);
+  gap: 12px 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--cf-border-soft);
 }
 
 .filters {
@@ -45,11 +47,7 @@
 }
 
 .tableCard {
-  background: var(--cf-surface);
-  border: 1px solid var(--cf-border);
-  border-radius: 12px;
-  box-shadow: var(--cf-shadow-card);
-  overflow: hidden;
+  background: transparent;
 }
 
 .table :global(.ant-table) {
@@ -57,14 +55,17 @@
 }
 
 .table :global(.ant-table-thead > tr > th) {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--cf-border-soft) !important;
 }
 
 .table :global(.ant-table-pagination.ant-pagination) {
   margin: 0 !important;
   padding: 16px 24px;
-  border-top: 1px solid var(--cf-border);
+  border-top: 1px solid var(--cf-border-soft);
 }
 
 @media (max-width: 640px) {

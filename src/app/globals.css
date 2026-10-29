@@ -1,9 +1,13 @@
+/*
+ * Sistema de capas: lienzo (barra lateral) → panel de trabajo elevado → tarjetas → elementos flotantes.
+ * Cada capa sube un escalón de luminosidad y lleva un borde fino + sombra en capas.
+ */
 :root {
-  --cf-purple-400: #a78bfa;
-  --cf-purple-500: #8b5cf6;
-  --cf-purple-600: #7c3aed;
-  --cf-purple-700: #6d28d9;
-  --cf-purple-900: #4c1d95;
+  --cf-purple-400: #b57cfd;
+  --cf-purple-500: #9047f7;
+  --cf-purple-600: #6c25f2;
+  --cf-purple-700: #5420d6;
+  --cf-purple-900: #2b107f;
   --cf-ink: #0e1116;
   --cf-ink-soft: #171b22;
   --cf-black-950: #0a0a0a;
@@ -13,46 +17,95 @@
   --cf-white: #ffffff;
   --cf-mist: #f3f4f8;
   --cf-mist-deep: #e8eaf0;
-  --cf-gray-50: #f3f4f8;
-  --cf-gray-100: #e8eaf0;
-  --cf-gray-200: #d3d7e0;
-  --cf-gray-400: #7b8494;
+  --cf-gray-50: #f4f4f7;
+  --cf-gray-100: #eaeaef;
+  --cf-gray-200: #d9d9e1;
+  --cf-gray-400: #7c7e8c;
 
-  --cf-bg: var(--cf-mist);
-  --cf-surface: var(--cf-white);
-  --cf-surface-muted: #f5f6f9;
-  --cf-border: #e6e8ee;
-  --cf-border-strong: var(--cf-gray-200);
-  --cf-text: #12151a;
-  --cf-text-muted: #5c6573;
+  --cf-canvas: #130b2b;
+  --cf-logo-ink: #2b107f;
+  /* Fondo de página fuera del shell (login, rebote del scroll); el lienzo oscuro es solo de la app */
+  --cf-page: #f4f4f7;
+  --cf-bg: var(--cf-canvas);
+  /* Barra lateral: siempre oscura, sobre el lienzo */
+  --cf-sider-text: rgba(255, 255, 255, 0.66);
+  --cf-sider-text-strong: #ffffff;
+  --cf-sider-line: rgba(255, 255, 255, 0.08);
+  --cf-panel: #f9f9fb;
+  --cf-surface: #ffffff;
+  --cf-surface-muted: #f6f6f9;
+  --cf-surface-hover: #f3f3f7;
+  --cf-elevated: #ffffff;
+  --cf-border: #e6e6ec;
+  --cf-border-soft: #efeff3;
+  --cf-border-strong: #d6d6de;
+  --cf-text: #101018;
+  --cf-text-muted: #5f6170;
+  --cf-text-subtle: #8a8c99;
   --cf-accent: var(--cf-purple-600);
-  --cf-accent-soft: color-mix(in srgb, var(--cf-purple-600) 10%, transparent);
-  --cf-shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 2px 8px rgba(16, 24, 40, 0.04);
-  --cf-gradient: linear-gradient(145deg, #6d28d9 0%, #312e81 55%, #0e1116 100%);
+  --cf-accent-soft: color-mix(in srgb, var(--cf-purple-600) 9%, transparent);
+  --cf-accent-glow: color-mix(in srgb, var(--cf-purple-500) 16%, transparent);
+  --cf-accent-tint: color-mix(in srgb, var(--cf-purple-600) 4%, transparent);
+  --cf-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --cf-shadow-panel:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 20px 50px -20px rgba(0, 0, 0, 0.6);
+  --cf-shadow-card:
+    0 0 0 1px rgba(16, 16, 32, 0.035),
+    0 1px 2px rgba(16, 16, 32, 0.04),
+    0 4px 12px -4px rgba(16, 16, 32, 0.06);
+  --cf-shadow-raised:
+    0 0 0 1px rgba(16, 16, 32, 0.04),
+    0 2px 4px rgba(16, 16, 32, 0.04),
+    0 12px 28px -8px rgba(16, 16, 32, 0.14);
+  --cf-gradient: linear-gradient(145deg, #5420d6 0%, #2b107f 55%, #0e1116 100%);
   --cf-radius: 10px;
+  --cf-radius-card: 14px;
+  --cf-radius-panel: 18px;
   --cf-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --cf-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme="dark"] {
-  --cf-bg: #1c2030;
-  --cf-surface: #262b3c;
-  --cf-surface-muted: #2c3344;
-  --cf-border: #3e465a;
-  --cf-border-strong: #525b72;
-  --cf-text: #f4f5f8;
-  --cf-text-muted: #b4bbc9;
-  --cf-accent: #a78bfa;
-  --cf-accent-soft: rgba(167, 139, 250, 0.2);
+  --cf-canvas: #0a0814;
+  --cf-logo-ink: #ffffff;
+  --cf-page: var(--cf-canvas);
+  --cf-bg: var(--cf-canvas);
+  --cf-panel: #0e0e14;
+  --cf-surface: #14141c;
+  --cf-surface-muted: #191922;
+  --cf-surface-hover: #1d1d27;
+  --cf-elevated: #1c1c26;
+  --cf-border: #24242f;
+  --cf-border-soft: #1c1c25;
+  --cf-border-strong: #33333f;
+  --cf-text: #ededf3;
+  --cf-text-muted: #9c9dac;
+  --cf-text-subtle: #6f7080;
+  --cf-accent: #b57cfd;
+  --cf-accent-soft: rgba(181, 124, 253, 0.14);
+  --cf-accent-glow: rgba(144, 71, 247, 0.16);
+  --cf-accent-tint: rgba(181, 124, 253, 0.045);
+  --cf-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --cf-shadow-panel:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 0 0 1px rgba(255, 255, 255, 0.055),
+    0 16px 40px -16px rgba(0, 0, 0, 0.7);
   --cf-shadow-card:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 1px 2px rgba(0, 0, 0, 0.12),
-    0 10px 28px rgba(12, 14, 24, 0.22);
-  --cf-gray-50: #2c3344;
-  --cf-gray-100: #3e465a;
-  --cf-gray-200: #525b72;
-  --cf-gray-400: #949cb0;
-  --cf-purple-600: #a78bfa;
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 1px 2px rgba(0, 0, 0, 0.45),
+    0 6px 18px -8px rgba(0, 0, 0, 0.6);
+  --cf-shadow-raised:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    0 16px 36px -10px rgba(0, 0, 0, 0.75);
+  --cf-gray-50: #191922;
+  --cf-gray-100: #24242f;
+  --cf-gray-200: #33333f;
+  --cf-gray-400: #8a8b9a;
+  --cf-purple-600: #b57cfd;
   color-scheme: dark;
 }
 
@@ -67,25 +120,17 @@ body {
   min-height: 100%;
 }
 
+html,
 body {
-  background:
-    radial-gradient(ellipse 70% 45% at 100% -10%, color-mix(in srgb, var(--cf-accent) 8%, transparent), transparent 55%),
-    linear-gradient(180deg, #f7f8fc 0%, var(--cf-bg) 42%),
-    var(--cf-bg);
-  background-attachment: fixed;
+  background: var(--cf-page);
+}
+
+body {
   color: var(--cf-text);
   font-family: var(--font-sans), ui-sans-serif, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.2s var(--cf-ease), color 0.2s var(--cf-ease);
-}
-
-[data-theme="dark"] body {
-  background:
-    radial-gradient(ellipse 80% 50% at 0% 0%, rgba(167, 139, 250, 0.07), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(99, 102, 241, 0.05), transparent 50%),
-    var(--cf-bg);
-  background-attachment: fixed;
 }
 
 a {
@@ -114,23 +159,99 @@ a {
   background: transparent;
 }
 
-/* Cards — relieve contable sobrio */
+/* Tarjetas: segunda capa sobre el panel — borde fino, brillo superior y sombra en capas */
 .ant-card {
+  background: var(--cf-surface) !important;
   border: 1px solid var(--cf-border) !important;
-  box-shadow: var(--cf-shadow-card) !important;
+  border-radius: var(--cf-radius-card) !important;
+  box-shadow: var(--cf-highlight), var(--cf-shadow-card) !important;
   transition:
     transform 0.28s var(--cf-ease),
     box-shadow 0.28s var(--cf-ease),
     border-color 0.28s var(--cf-ease) !important;
 }
 
-.ant-card .ant-card-head-title {
+.ant-card .ant-card-head {
+  border-bottom-color: var(--cf-border-soft) !important;
+}
+
+.ant-card .ant-card-head {
+  background: linear-gradient(180deg, var(--cf-accent-tint), transparent);
+}
+
+/* Acento de marca antes del título de cada tarjeta */
+.ant-card .ant-card-head .ant-card-head-title {
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
+.ant-card .ant-card-head .ant-card-head-title::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  margin-inline-end: 10px;
+  vertical-align: -2px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--cf-purple-500), #5420d6);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--cf-purple-500) 45%, transparent);
+}
+
+/* Selector segmentado y pestañas con relieve y brillo */
+.ant-segmented .ant-segmented-item-selected,
+.ant-segmented .ant-segmented-thumb {
+  box-shadow: var(--cf-highlight), var(--cf-shadow-card) !important;
+}
+
+.ant-tabs .ant-tabs-ink-bar {
+  height: 2px !important;
+  border-radius: 2px;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--cf-accent) 60%, transparent);
+}
+
+.ant-btn-primary:not(:disabled):not(.ant-btn-background-ghost):hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 1px 2px rgba(43, 16, 127, 0.25),
+    0 6px 18px -4px color-mix(in srgb, var(--cf-accent) 70%, transparent) !important;
+}
+
+/* Elementos flotantes: tercera capa */
+.ant-modal .ant-modal-content,
+.ant-dropdown .ant-dropdown-menu,
+.ant-select-dropdown,
+.ant-picker-dropdown .ant-picker-panel-container,
+.ant-popover .ant-popover-inner {
+  border: 1px solid var(--cf-border);
+  box-shadow: var(--cf-highlight), var(--cf-shadow-raised) !important;
+}
+
+.ant-modal .ant-modal-content {
+  border-radius: var(--cf-radius-panel) !important;
+}
+
+.ant-modal-mask {
+  backdrop-filter: blur(3px);
+}
+
+/* Botones secundarios con relieve */
+.ant-btn-default:not(:disabled) {
+  box-shadow: var(--cf-highlight), 0 1px 2px rgba(16, 16, 32, 0.06) !important;
+}
+
+[data-theme="dark"] .ant-btn-default:not(:disabled) {
+  box-shadow: var(--cf-highlight), 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+.ant-btn-primary:not(:disabled):not(.ant-btn-background-ghost) {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 1px 2px rgba(43, 16, 127, 0.25),
+    0 4px 12px -4px color-mix(in srgb, var(--cf-accent) 55%, transparent) !important;
+}
+
 .ant-btn-primary {
-  box-shadow: none !important;
   transition: transform 0.2s var(--cf-ease), filter 0.2s var(--cf-ease) !important;
 }
 
@@ -192,10 +313,54 @@ a {
   font-weight: 500;
 }
 
-/* Tags con aire */
+/* Tags con aire; los de estado llevan un punto de color */
 .ant-tag {
   padding-inline: 8px;
   line-height: 22px;
+}
+
+.ant-tag-success,
+.ant-tag-error,
+.ant-tag-warning,
+.ant-tag-processing,
+.ant-tag-green,
+.ant-tag-red,
+.ant-tag-orange,
+.ant-tag-blue,
+.ant-tag-gold {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px !important;
+  padding-inline: 9px 10px !important;
+  font-weight: 500;
+}
+
+.ant-tag-success:not(:has(.anticon))::before,
+.ant-tag-error:not(:has(.anticon))::before,
+.ant-tag-warning:not(:has(.anticon))::before,
+.ant-tag-processing:not(:has(.anticon))::before,
+.ant-tag-green:not(:has(.anticon))::before,
+.ant-tag-red:not(:has(.anticon))::before,
+.ant-tag-orange:not(:has(.anticon))::before,
+.ant-tag-blue:not(:has(.anticon))::before,
+.ant-tag-gold:not(:has(.anticon))::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+}
+
+/* Tablas: leve tinte de marca en encabezado y al pasar el mouse */
+.ant-table-wrapper .ant-table-thead > tr > th {
+  background-image: linear-gradient(var(--cf-accent-tint), var(--cf-accent-tint)) !important;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr.ant-table-row:hover > td {
+  background-image: linear-gradient(var(--cf-accent-tint), var(--cf-accent-tint));
 }
 
 /* Drawers */

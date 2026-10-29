@@ -1,16 +1,16 @@
-/** Paleta Contafy — tinta + violeta de marca. */
+/** Paleta Contafy — tomada del logo: lila → violeta eléctrico → índigo tinta. */
 export const palette = {
   purple: {
-    50: "#F5F3FF",
-    100: "#EDE9FE",
-    200: "#DDD6FE",
-    300: "#C4B5FD",
-    400: "#A78BFA",
-    500: "#8B5CF6",
-    600: "#7C3AED",
-    700: "#6D28D9",
-    800: "#5B21B6",
-    900: "#4C1D95",
+    50: "#F4EEFF",
+    100: "#E9DDFF",
+    200: "#D5BEFE",
+    300: "#C99BFD",
+    400: "#B57CFD",
+    500: "#9047F7",
+    600: "#6C25F2",
+    700: "#5420D6",
+    800: "#4013BE",
+    900: "#2B107F",
   },
   black: {
     950: "#0E1116",
@@ -33,4 +33,4 @@ export const palette = {
   error: "#DC2626",
 } as const;
 
-export const brandGradient = `linear-gradient(145deg, ${palette.purple[700]} 0%, #312E81 55%, ${palette.black[950]} 100%)`;
+export const brandGradient = `linear-gradient(145deg, ${palette.purple[600]} 0%, ${palette.purple[900]} 55%, ${palette.black[950]} 100%)`;
