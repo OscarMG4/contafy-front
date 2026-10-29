@@ -1,10 +1,10 @@
 import { Avatar } from "antd";
 
 const GRADIENTS = [
-  "linear-gradient(135deg,#8B5CF6,#4C1D95)",
-  "linear-gradient(135deg,#A78BFA,#6D28D9)",
-  "linear-gradient(135deg,#7C3AED,#1F1F2B)",
-  "linear-gradient(135deg,#C4B5FD,#7C3AED)",
+  "linear-gradient(135deg,#9047F7,#2B107F)",
+  "linear-gradient(135deg,#B57CFD,#5420D6)",
+  "linear-gradient(135deg,#6C25F2,#1A0A52)",
+  "linear-gradient(135deg,#C99BFD,#6C25F2)",
 ];
 
 export function CompanyAvatar({ id, name, size = 36 }: { id: string; name: string; size?: number }) {

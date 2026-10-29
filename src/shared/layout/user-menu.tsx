@@ -79,11 +79,12 @@ export function UserMenu() {
               shape="circle"
               icon={label ? undefined : <UserOutlined />}
               style={{
-                background: palette.purple[600],
+                background: `linear-gradient(135deg, ${palette.purple[400]} 0%, ${palette.purple[600]} 50%, ${palette.purple[800]} 100%)`,
                 color: "#fff",
                 fontWeight: 700,
                 borderRadius: "50%",
                 flexShrink: 0,
+                boxShadow: "0 0 0 2px var(--cf-panel), 0 0 0 3.5px color-mix(in srgb, var(--cf-accent) 35%, transparent)",
               }}
             >
               {label}

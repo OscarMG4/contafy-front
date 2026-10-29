@@ -33,6 +33,24 @@ function toMenuItems(items: NavItem[]): MenuItem[] {
   }));
 }
 
+/** Agrupa los ítems de primer nivel por su sección (rótulos del menú lateral). */
+function toSectionedMenuItems(items: NavItem[]): MenuItem[] {
+  const groups: { section: string; items: NavItem[] }[] = [];
+  for (const item of items) {
+    const section = item.section ?? "";
+    const last = groups.at(-1);
+    if (last && last.section === section) last.items.push(item);
+    else groups.push({ section, items: [item] });
+  }
+
+  return groups.map(({ section, items: groupItems }) => ({
+    type: "group" as const,
+    key: `section:${section}`,
+    label: section || undefined,
+    children: toMenuItems(groupItems),
+  }));
+}
+
 function parentKeysOf(pathname: string): string[] {
   return NAVIGATION.filter((item) => item.children?.some((child) => pathname.startsWith(child.key))).map(
     (item) => item.key,
@@ -45,7 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { isDark, toggle } = useThemeMode();
   const [collapsed, setCollapsed] = useState(false);
 
-  const menuItems = useMemo(() => toMenuItems(NAVIGATION), []);
+  const menuItems = useMemo(() => toSectionedMenuItems(NAVIGATION), []);
   const selectedKey = useMemo(() => {
     const flat = NAVIGATION.flatMap((item) => [item, ...(item.children ?? [])]);
     return flat
@@ -54,7 +72,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout className={styles.canvas}>
       <Layout.Sider
         width={264}
         collapsedWidth={80}
@@ -66,7 +84,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         <div className={styles.siderInner}>
           <div className={styles.brand} style={{ justifyContent: collapsed ? "center" : "flex-start" }}>
-            <Logo size={32} showText={!collapsed} />
+            <Logo size={30} showText={!collapsed} color="#fff" />
           </div>
 
           <Menu
@@ -81,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </Layout.Sider>
 
-      <Layout>
+      <Layout className={styles.main}>
         <Layout.Header className={styles.header}>
           <div className={styles.rail}>
             <Flex align="center" gap={16} style={{ flex: 1, minWidth: 0 }}>

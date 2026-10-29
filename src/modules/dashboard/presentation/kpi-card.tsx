@@ -7,6 +7,14 @@ import { formatMoney, formatPercent } from "@/shared/lib/format";
 import type { Kpi } from "../domain/dashboard.types";
 import styles from "./kpi-card.module.css";
 
+/** Color propio de cada indicador; los no listados usan el acento de marca. */
+const KPI_TONES: Record<string, string> = {
+  income: "#6C25F2",
+  expenses: "#F43F5E",
+  receivables: "#0EA5E9",
+  payables: "#F59E0B",
+};
+
 interface KpiCardProps {
   kpi: Kpi;
   icon: ReactNode;
@@ -25,19 +33,18 @@ export function KpiCard({ kpi, icon, inverse = false, highlighted = false, index
     <Card
       variant="borderless"
       className={styles.card}
-      style={{ ["--cf-stagger" as string]: String(index) } as CSSProperties}
+      style={
+        {
+          ["--cf-stagger" as string]: String(index),
+          ["--kpi-tone" as string]: KPI_TONES[kpi.key] ?? "var(--cf-accent)",
+        } as CSSProperties
+      }
     >
       <Flex justify="space-between" align="center" gap={16}>
         <Typography.Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>
           {kpi.label}
         </Typography.Text>
-        <span
-          className={styles.icon}
-          style={{
-            color: highlighted ? "var(--cf-accent)" : "var(--cf-text-muted)",
-            background: highlighted ? "var(--cf-accent-soft)" : "var(--cf-surface-muted)",
-          }}
-        >
+        <span className={styles.icon} data-highlighted={highlighted || undefined}>
           {icon}
         </span>
       </Flex>

@@ -1,31 +1,27 @@
+/* Capa 0: lienzo. La barra lateral se apoya directo sobre él, sin caja propia. */
+.canvas {
+  min-height: 100vh;
+  background: var(--cf-canvas) !important;
+}
+
 .sider {
   position: sticky !important;
   top: 0;
   height: 100vh;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-  background: linear-gradient(180deg, #12151a 0%, #0e1116 100%) !important;
+  background: var(--cf-canvas) !important;
 }
 
-[data-theme="dark"] .sider {
-  background:
-    linear-gradient(180deg, rgba(167, 139, 250, 0.06) 0%, transparent 28%),
-    linear-gradient(180deg, #1c2130 0%, #171b28 100%) !important;
-  border-right-color: #31384a;
-}
-
-[data-theme="dark"] .header {
-  background: color-mix(in srgb, var(--cf-surface) 94%, transparent) !important;
-  border-bottom-color: color-mix(in srgb, var(--cf-border) 80%, transparent);
-}
-
+/* Aurora violeta detrás del logo */
 .sider::before {
   content: "";
   position: absolute;
-  inset: 0 auto 0 0;
-  width: 2px;
-  background: linear-gradient(180deg, #a78bfa 0%, transparent 55%);
-  opacity: 0.85;
+  inset: -80px -40px auto -60px;
+  height: 260px;
   pointer-events: none;
+  background:
+    radial-gradient(closest-side, rgba(144, 71, 247, 0.26), transparent),
+    radial-gradient(closest-side at 70% 60%, rgba(64, 19, 190, 0.14), transparent);
+  filter: blur(8px);
 }
 
 .siderInner {
@@ -35,33 +31,122 @@
 }
 
 .brand {
+  position: relative;
   display: flex;
   align-items: center;
-  height: 72px;
+  height: 64px;
   padding: 0 22px;
-  color: #fff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--cf-sider-text-strong);
   transition: padding 0.25s var(--cf-ease);
 }
 
 .menu {
+  position: relative;
   flex: 1;
   overflow-y: auto;
   border-inline-end: none !important;
-  padding: 16px 0 12px;
+  padding: 6px 0 12px;
   background: transparent !important;
+}
+
+/* Ítem activo: degradado violeta con barra luminosa a la izquierda */
+.menu :global(.ant-menu-item-selected) {
+  position: relative;
+  background-image: linear-gradient(90deg, rgba(144, 71, 247, 0.3), rgba(144, 71, 247, 0.08)) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(181, 124, 253, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  font-weight: 500;
+}
+
+.menu :global(.ant-menu-item-selected)::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: #b57cfd;
+  box-shadow: 0 0 12px 1px rgba(181, 124, 253, 0.7);
+}
+
+.menu :global(.ant-menu-item-selected .ant-menu-item-icon),
+.menu :global(.ant-menu-submenu-selected > .ant-menu-submenu-title .ant-menu-item-icon) {
+  color: #d5befe;
+}
+
+.menu :global(.ant-menu-submenu-selected > .ant-menu-submenu-title) {
+  color: var(--cf-sider-text-strong);
+}
+
+.menu :global(.ant-menu-sub.ant-menu-inline) {
+  position: relative;
+}
+
+/* Rótulos de sección */
+.menu :global(.ant-menu-item-group-title) {
+  padding: 18px 22px 6px !important;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.36) !important;
+}
+
+.menu :global(.ant-menu-item-group:first-child .ant-menu-item-group-title) {
+  padding-top: 6px !important;
+}
+
+.menu :global(.ant-menu-inline-collapsed .ant-menu-item-group-title) {
+  padding-inline: 0 !important;
+  text-align: center;
+}
+
+/* Guía vertical de los submenús */
+.menu :global(.ant-menu-sub.ant-menu-inline)::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 33px;
+  width: 1px;
+  background: var(--cf-sider-line);
+}
+
+/* Capa 1: panel de trabajo elevado sobre el lienzo */
+.main {
+  position: relative;
+  margin: 8px 8px 8px 0;
+  min-height: calc(100vh - 16px);
+  border-radius: var(--cf-radius-panel);
+  background: var(--cf-panel) !important;
+  box-shadow: var(--cf-shadow-panel);
+  overflow: clip;
+  isolation: isolate;
+}
+
+/* Brillo de marca muy suave en la parte alta del panel */
+.main::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 420px;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(ellipse 60% 100% at 85% -30%, var(--cf-accent-glow), transparent 70%);
 }
 
 .header {
   position: sticky;
   top: 0;
   z-index: 10;
-  height: 72px;
+  height: 64px;
   padding: 0 !important;
-  line-height: 72px;
-  border-bottom: 1px solid var(--cf-border);
-  background: color-mix(in srgb, var(--cf-surface) 88%, transparent) !important;
-  backdrop-filter: blur(12px) saturate(1.15);
+  line-height: 64px;
+  border-bottom: 1px solid var(--cf-border-soft);
+  background: color-mix(in srgb, var(--cf-panel) 82%, transparent) !important;
+  backdrop-filter: blur(14px) saturate(1.2);
   transition: border-color 0.2s var(--cf-ease), background 0.2s var(--cf-ease);
 }
 
@@ -81,34 +166,18 @@
 .search {
   max-width: 320px;
   flex: 1;
+  border: 1px solid var(--cf-border-soft) !important;
+  box-shadow: inset 0 1px 2px rgba(16, 16, 32, 0.04);
   transition: max-width 0.25s var(--cf-ease), opacity 0.2s var(--cf-ease);
 }
 
 .content {
   position: relative;
-  padding: 44px 40px 56px;
+  padding: 36px 40px 56px;
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
-  min-height: calc(100vh - 72px);
-}
-
-/* Rejilla de libro muy tenue en el área de trabajo */
-.content::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.035;
-  background-image:
-    linear-gradient(var(--cf-text) 1px, transparent 1px),
-    linear-gradient(90deg, var(--cf-text) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 20%, #000 20%, transparent 75%);
-}
-
-[data-theme="dark"] .content::before {
-  opacity: 0.04;
+  min-height: calc(100vh - 80px);
 }
 
 .userButton {
@@ -186,6 +255,11 @@
 }
 
 @media (max-width: 767px) {
+  .main {
+    margin: 0;
+    border-radius: 0;
+  }
+
   .rail {
     padding: 0 16px;
     max-width: none;
@@ -194,10 +268,6 @@
   .content {
     padding: 24px 18px 32px;
     max-width: none;
-  }
-
-  .content::before {
-    display: none;
   }
 
   .search {
