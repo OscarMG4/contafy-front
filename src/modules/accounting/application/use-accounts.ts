@@ -4,7 +4,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 
 import { useActiveCompany } from "@/modules/companies/application/active-company";
 
-import type { AccountFilters, AccountInput, AccountUpdateInput } from "../domain/account.types";
+import type { AccountFilters, AccountInput, AccountUpdateInput, ChartImportInputRow } from "../domain/account.types";
 import { accountsApi } from "../infrastructure/accounts.api";
 
 export const accountKeys = {
@@ -41,6 +41,22 @@ export function useUpdateAccount() {
   const invalidate = useInvalidateAccounts();
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: AccountUpdateInput }) => accountsApi.update(id, input),
+    onSuccess: invalidate,
+  });
+}
+
+export function usePreviewChartImport() {
+  return useMutation({
+    mutationFn: ({ rows, updateNames }: { rows: ChartImportInputRow[]; updateNames: boolean }) =>
+      accountsApi.previewImport(rows, updateNames),
+  });
+}
+
+export function useImportChart() {
+  const invalidate = useInvalidateAccounts();
+  return useMutation({
+    mutationFn: ({ rows, updateNames }: { rows: ChartImportInputRow[]; updateNames: boolean }) =>
+      accountsApi.import(rows, updateNames),
     onSuccess: invalidate,
   });
 }

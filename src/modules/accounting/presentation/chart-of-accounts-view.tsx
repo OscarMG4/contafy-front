@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { EditOutlined, MoreOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Checkbox, Dropdown, Empty, Select, Tag, Typography, type TableProps } from "antd";
+import { EditOutlined, MoreOutlined, PlusOutlined, UploadOutlined } from "@ant-design/icons";
+import { Button, Card, Checkbox, Dropdown, Empty, Flex, Select, Tag, Typography, type TableProps } from "antd";
 
 import { useCurrentUser } from "@/modules/auth/application/use-auth";
 import { useActiveCompany } from "@/modules/companies/application/active-company";
@@ -12,6 +12,7 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { useAccounts, useNatures } from "../application/use-accounts";
 import type { Account, AccountFilters } from "../domain/account.types";
 import { AccountFormDrawer } from "./account-form-drawer";
+import { ChartImportModal } from "./chart-import-modal";
 
 const WRITE_ROLES = new Set(["owner", "admin"]);
 
@@ -27,6 +28,7 @@ export function ChartOfAccountsView() {
     open: boolean;
     account: Account | null;
   }>({ open: false, account: null });
+  const [importOpen, setImportOpen] = useState(false);
   const { data, isFetching, isLoading } = useAccounts(filters);
   const { data: natures } = useNatures();
   const canWrite = WRITE_ROLES.has(user?.role ?? "");
@@ -146,9 +148,14 @@ export function ChartOfAccountsView() {
         }
         action={
           canWrite && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-              Nueva cuenta
-            </Button>
+            <Flex gap={8}>
+              <Button icon={<UploadOutlined />} onClick={() => setImportOpen(true)}>
+                Importar plan
+              </Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+                Nueva cuenta
+              </Button>
+            </Flex>
           )
         }
         rowKey="id"
@@ -186,6 +193,8 @@ export function ChartOfAccountsView() {
         account={drawer.account}
         onClose={() => setDrawer({ open: false, account: null })}
       />
+
+      <ChartImportModal open={importOpen} onClose={() => setImportOpen(false)} />
     </>
   );
 }
