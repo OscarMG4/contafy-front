@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { EyeOutlined, MoreOutlined, PlusOutlined, StopOutlined } from "@ant-design/icons";
-import { App, Button, DatePicker, Dropdown, Empty, Select, Tag, Typography, type TableProps } from "antd";
+import { EyeOutlined, MoreOutlined, PlusOutlined, StopOutlined, UploadOutlined } from "@ant-design/icons";
+import { App, Button, DatePicker, Dropdown, Empty, Flex, Select, Tag, Typography, type TableProps } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import { useRouter } from "next/navigation";
 
@@ -26,6 +26,7 @@ import {
 import { PurchaseDetailDrawer } from "./purchase-detail-drawer";
 import { PurchaseFormDrawer } from "./purchase-form-drawer";
 import { ExpensePurchaseFormDrawer } from "./expense-purchase-form-drawer";
+import { PurchaseImportModal } from "./purchase-import-modal";
 
 const WRITE_ROLES = new Set(["owner", "admin", "accountant"]);
 
@@ -48,6 +49,7 @@ export function PurchasesView() {
   });
   const [formOpen, setFormOpen] = useState(false);
   const [expenseFormOpen, setExpenseFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
 
   const { data, isFetching, isLoading } = usePurchases(filters);
@@ -253,32 +255,37 @@ export function PurchasesView() {
         }
         action={
           canWrite ? (
-            <Dropdown
-              menu={{
-                items: [
-                  {
-                    key: "merchandise",
-                    label: "Compra de mercadería",
-                    onClick: () => setFormOpen(true),
-                  },
-                  {
-                    key: "expense",
-                    label: "Compra de gastos",
-                    onClick: () => setExpenseFormOpen(true),
-                  },
-                  {
-                    key: "additional_cost",
-                    label: "Costo adicional",
-                    onClick: () => router.push("/purchases/additional-costs/new"),
-                  },
-                ],
-              }}
-              trigger={["click"]}
-            >
-              <Button type="primary" icon={<PlusOutlined />} disabled={!company}>
-                Nueva compra
+            <Flex gap={8}>
+              <Button icon={<UploadOutlined />} disabled={!company} onClick={() => setImportOpen(true)}>
+                Importar Excel
               </Button>
-            </Dropdown>
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: "merchandise",
+                      label: "Compra de mercadería",
+                      onClick: () => setFormOpen(true),
+                    },
+                    {
+                      key: "expense",
+                      label: "Compra de gastos",
+                      onClick: () => setExpenseFormOpen(true),
+                    },
+                    {
+                      key: "additional_cost",
+                      label: "Costo adicional",
+                      onClick: () => router.push("/purchases/additional-costs/new"),
+                    },
+                  ],
+                }}
+                trigger={["click"]}
+              >
+                <Button type="primary" icon={<PlusOutlined />} disabled={!company}>
+                  Nueva compra
+                </Button>
+              </Dropdown>
+            </Flex>
           ) : undefined
         }
         rowKey="id"
@@ -299,6 +306,7 @@ export function PurchasesView() {
 
       <PurchaseFormDrawer open={formOpen} onClose={() => setFormOpen(false)} />
       <ExpensePurchaseFormDrawer open={expenseFormOpen} onClose={() => setExpenseFormOpen(false)} />
+      <PurchaseImportModal open={importOpen} onClose={() => setImportOpen(false)} />
       <PurchaseDetailDrawer
         purchaseId={detailId}
         open={Boolean(detailId)}
