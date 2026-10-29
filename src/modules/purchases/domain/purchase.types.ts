@@ -183,6 +183,7 @@ export interface ExpenseLineInput {
   /** Importe de la línea (cantidad 1). */
   unitPrice: number;
   operationType: string;
+  costCenterId?: string | null;
 }
 
 export interface InstallmentInput {
@@ -215,6 +216,13 @@ export interface PurchaseGapFields {
 /** Campos de captura estilo SiempreSoft (precios, percepción, retención, cuotas, pago al contado). */
 export interface PurchaseExtraFields {
   pricesIncludeTax: boolean;
+  /** Tasa IGV: 18 (general) o 10 (MYPE restaurantes / hoteles, Ley 31556). */
+  igvRate?: number;
+  accountingSchemeId?: string | null;
+  annexId?: string | null;
+  expenseSheetId?: string | null;
+  /** Tipo de operación SUNAT (tabla 12). */
+  sunatOperationType?: string | null;
   perceptionAmount?: number | null;
   retentionPercent?: number | null;
   installments?: InstallmentInput[];
@@ -421,4 +429,43 @@ export const MODIFIED_DOCUMENT_TYPE_OPTIONS = [
 
 export function requiresModifiedDocument(documentType: string): boolean {
   return documentType === "07" || documentType === "08";
+}
+
+/** Opciones de «Operación» con los textos de SiempreSoft (el back también acepta "exonerated"). */
+export const SIEMPRESOFT_OPERATION_OPTIONS = [
+  { value: "taxed_taxed", label: "A.GRAV. DEST. A OPER. GRAV." },
+  { value: "taxed_mixed", label: "A.GRAV. DEST. A OPER. GRAV. Y NO GRAV." },
+  { value: "taxed_non_taxed", label: "A.GRAV. DEST. A OPER. NO GRAV." },
+  { value: "non_taxed", label: "ADQUISICIONES NO GRAVADAS" },
+  { value: "other_charges", label: "OTROS CARGOS" },
+];
+
+/** «Tipo de Operación» (SUNAT tabla 12) aplicable a compras. */
+export const SUNAT_OPERATION_TYPE_OPTIONS = [
+  { value: "02", label: "02 - COMPRA" },
+  { value: "03", label: "03 - CONSIGNACIÓN RECIBIDA" },
+  { value: "05", label: "05 - DEVOLUCIÓN RECIBIDA" },
+  { value: "18", label: "18 - IMPORTACIÓN" },
+  { value: "99", label: "99 - OTROS" },
+];
+
+export const IGV_RATE_OPTIONS = [
+  { value: 18, label: "IGV 18%" },
+  { value: 10, label: "IGV 10% (MYPE restaurantes / hoteles)" },
+];
+
+/** «Condición Pago» como en SiempreSoft: CONTADO o CRED N DIAS. */
+export const PAYMENT_CONDITION_DAYS = [7, 15, 30, 45, 60, 90];
+
+export function paymentConditionValue(term?: string, days?: number) {
+  return term === "credit" ? `credit:${days ?? 0}` : "cash";
+}
+
+export function paymentConditionOptions(currentDays?: number) {
+  const days = new Set(PAYMENT_CONDITION_DAYS);
+  if (currentDays && currentDays > 0) days.add(currentDays);
+  return [
+    { value: "cash", label: "CONTADO" },
+    ...[...days].sort((a, b) => a - b).map((d) => ({ value: `credit:${d}`, label: `CRED ${d} DIAS` })),
+  ];
 }

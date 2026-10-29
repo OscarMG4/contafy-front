@@ -1,9 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { Button, Col, Form, Input, InputNumber, Modal, Row, Select, type FormInstance } from "antd";
+import { Button, Col, Form, Input, InputNumber, Modal, Row, type FormInstance } from "antd";
 
-import { useDetractions, useGoodsServicesClassifications } from "../../application/use-purchases";
 import type { DocumentFormValues } from "./document-model";
 
 interface OptionsModalProps {
@@ -13,23 +11,10 @@ interface OptionsModalProps {
 }
 
 /**
- * "<<Otras Opciones...": ISC, descuento, detracción y clasificación de bienes y servicios.
+ * "<<Otras Opciones...": ISC y descuento (detracción y clasificación van en la cabecera, como en SiempreSoft).
  * Se renderiza siempre (forceRender) para que sus campos sigan registrados en el formulario.
  */
-export function OtherOptionsModal({ form, open, onClose }: OptionsModalProps) {
-  const { data: detractions } = useDetractions();
-  const { data: classifications } = useGoodsServicesClassifications();
-
-  const detractionOptions = useMemo(
-    () =>
-      (detractions ?? []).map((entry) => ({
-        value: entry.code,
-        label: `${entry.code} · ${entry.description}`,
-        percent: Number(entry.meta?.percentage ?? 0),
-      })),
-    [detractions],
-  );
-
+export function OtherOptionsModal({ open, onClose }: OptionsModalProps) {
   return (
     <Modal
       open={open}
@@ -52,36 +37,6 @@ export function OtherOptionsModal({ form, open, onClose }: OptionsModalProps) {
         <Col span={12}>
           <Form.Item name="discountAmount" label="Descuento">
             <InputNumber min={0} precision={2} style={{ width: "100%" }} />
-          </Form.Item>
-        </Col>
-        <Col span={16}>
-          <Form.Item name="detractionCode" label="Detracción">
-            <Select
-              allowClear
-              showSearch={{ optionFilterProp: "label" }}
-              placeholder="Sin detracción"
-              options={detractionOptions}
-              popupMatchSelectWidth={false}
-              onChange={(code) => {
-                const option = detractionOptions.find((o) => o.value === code);
-                form.setFieldValue("detractionPercent", option?.percent ?? null);
-              }}
-            />
-          </Form.Item>
-        </Col>
-        <Col span={8}>
-          <Form.Item name="detractionPercent" label="% Detracción">
-            <InputNumber min={0} max={100} precision={4} style={{ width: "100%" }} disabled />
-          </Form.Item>
-        </Col>
-        <Col span={24}>
-          <Form.Item name="goodsServicesClass" label="Clasificación bien / servicio">
-            <Select
-              allowClear
-              placeholder="Tabla 30 SUNAT (opcional)"
-              options={(classifications ?? []).map((c) => ({ value: c.code, label: `${c.code} · ${c.description}` }))}
-              popupMatchSelectWidth={false}
-            />
           </Form.Item>
         </Col>
       </Row>

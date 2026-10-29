@@ -34,6 +34,7 @@ function toExpenseLinePayload(line: ExpensePurchaseInput["lines"][number]) {
     description: line.description,
     unit_price: line.unitPrice,
     operation_type: line.operationType,
+    cost_center_id: line.costCenterId || null,
   };
 }
 
@@ -55,11 +56,24 @@ function toGapPayload(input: PurchaseGapFields) {
 }
 
 /** Precios, percepción y retención: afectan al cálculo (register y preview). */
-function toPricingPayload(input: Pick<PurchaseExtraFields, "pricesIncludeTax" | "perceptionAmount" | "retentionPercent">) {
+function toPricingPayload(
+  input: Pick<PurchaseExtraFields, "pricesIncludeTax" | "perceptionAmount" | "retentionPercent" | "igvRate">,
+) {
   return {
     prices_include_tax: input.pricesIncludeTax,
+    igv_rate: input.igvRate ?? 18,
     perception_amount: input.perceptionAmount ?? null,
     retention_percent: input.retentionPercent ?? null,
+  };
+}
+
+/** Esquema contable, anexo, planilla de gasto y tipo de operación SUNAT. */
+function toClassificationPayload(input: PurchaseExtraFields) {
+  return {
+    accounting_scheme_id: input.accountingSchemeId || null,
+    annex_id: input.annexId || null,
+    expense_sheet_id: input.expenseSheetId || null,
+    sunat_operation_type: input.sunatOperationType || null,
   };
 }
 
@@ -98,6 +112,7 @@ function toMerchandisePayload(input: PurchaseInput) {
     ...toGapPayload(input),
     ...toPricingPayload(input),
     ...toSettlementPayload(input),
+    ...toClassificationPayload(input),
   };
 }
 
@@ -120,6 +135,7 @@ function toExpensePayload(input: ExpensePurchaseInput) {
     ...toGapPayload(input),
     ...toPricingPayload(input),
     ...toSettlementPayload(input),
+    ...toClassificationPayload(input),
   };
 }
 
@@ -141,7 +157,7 @@ export type PreviewGap = Pick<
   PurchaseGapFields,
   "iscAmount" | "discountAmount" | "detractionCode" | "detractionPercent"
 > &
-  Pick<PurchaseExtraFields, "pricesIncludeTax" | "perceptionAmount" | "retentionPercent"> & {
+  Pick<PurchaseExtraFields, "pricesIncludeTax" | "perceptionAmount" | "retentionPercent" | "igvRate"> & {
     documentType?: string;
   };
 

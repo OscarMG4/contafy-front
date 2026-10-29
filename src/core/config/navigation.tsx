@@ -44,6 +44,7 @@ export const NAVIGATION: NavItem[] = [
     children: [
       { key: "/purchases/orders", label: "Órdenes de compra" },
       { key: "/purchases", label: "Registro de compras" },
+      { key: "/purchases/expense-sheets", label: "Planillas de gasto" },
     ],
   },
   { key: "/sales", label: "Ventas", icon: <FileTextOutlined />, section: "Operaciones" },
@@ -78,6 +79,9 @@ export const NAVIGATION: NavItem[] = [
     children: [
       { key: "/accounting/chart-of-accounts", label: "Plan de cuentas" },
       { key: "/accounting/categories", label: "Categorías contables" },
+      { key: "/accounting/links", label: "Enlaces contables" },
+      { key: "/accounting/cost-centers", label: "Centros de costo" },
+      { key: "/accounting/annexes", label: "Anexos" },
       { key: "/accounting/proration", label: "Prorrata IGV" },
       { key: "/accounting/periods", label: "Cierre de periodos" },
       { key: "/accounting/journal-entries", label: "Asientos contables" },
