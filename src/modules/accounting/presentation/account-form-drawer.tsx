@@ -2,13 +2,14 @@
 
 import { useEffect } from "react";
 import { BankOutlined, NumberOutlined } from "@ant-design/icons";
-import { Alert, App, Button, Drawer, Flex, Form, Input, Select, Switch, Typography } from "antd";
+import { Alert, App, Button, Col, Divider, Drawer, Flex, Form, Input, Row, Select, Switch, Typography } from "antd";
 
 import { ApiError } from "@/core/http/api-error";
 import { applyApiFieldErrors } from "@/shared/lib/form-errors";
 
 import { useCreateAccount, useNatures, useUpdateAccount } from "../application/use-accounts";
 import type { Account, AccountInput, AccountUpdateInput } from "../domain/account.types";
+import { AccountCodeSelect } from "./account-code-select";
 
 const CREATE_BACKEND_FIELDS: Record<string, keyof AccountInput> = {
   code: "code",
@@ -21,6 +22,8 @@ const CREATE_BACKEND_FIELDS: Record<string, keyof AccountInput> = {
 const UPDATE_BACKEND_FIELDS: Record<string, keyof AccountUpdateInput> = {
   name: "name",
   active: "active",
+  debit_destination_code: "debitDestinationCode",
+  credit_destination_code: "creditDestinationCode",
 };
 
 interface AccountFormDrawerProps {
@@ -45,6 +48,8 @@ export function AccountFormDrawer({ open, account, onClose, onSaved }: AccountFo
       form.setFieldsValue({
         name: account.name,
         active: account.active,
+        debitDestinationCode: account.debit_destination_code ?? null,
+        creditDestinationCode: account.credit_destination_code ?? null,
       } as AccountUpdateInput);
     } else {
       form.setFieldsValue({
@@ -134,6 +139,54 @@ export function AccountFormDrawer({ open, account, onClose, onSaved }: AccountFo
           <Form.Item label="Activa" name="active" valuePropName="checked">
             <Switch />
           </Form.Item>
+        )}
+
+        {isEdit && account?.is_leaf && (
+          <>
+            <Divider titlePlacement="start" style={{ margin: "8px 0 12px" }}>
+              Asiento de destino
+            </Divider>
+            <Typography.Paragraph type="secondary" style={{ fontSize: 12, marginTop: 0 }}>
+              Enlace por transferencia: al usar esta cuenta se genera el asiento de destino. Ej. 63x → Debe 94x /
+              Haber 791. Indica ambas cuentas o ninguna.
+            </Typography.Paragraph>
+            <Row gutter={12}>
+              <Col span={12}>
+                <Form.Item
+                  label="Cuenta destino (Debe)"
+                  name="debitDestinationCode"
+                  dependencies={["creditDestinationCode"]}
+                  rules={[
+                    ({ getFieldValue }) => ({
+                      validator: (_, value) =>
+                        !value && getFieldValue("creditDestinationCode")
+                          ? Promise.reject(new Error("Indica también la cuenta destino"))
+                          : Promise.resolve(),
+                    }),
+                  ]}
+                >
+                  <AccountCodeSelect placeholder="Ej. 941" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label="Contracuenta (Haber)"
+                  name="creditDestinationCode"
+                  dependencies={["debitDestinationCode"]}
+                  rules={[
+                    ({ getFieldValue }) => ({
+                      validator: (_, value) =>
+                        !value && getFieldValue("debitDestinationCode")
+                          ? Promise.reject(new Error("Indica también la contracuenta"))
+                          : Promise.resolve(),
+                    }),
+                  ]}
+                >
+                  <AccountCodeSelect placeholder="Ej. 791" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </>
         )}
       </Form>
     </Drawer>

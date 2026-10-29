@@ -1,7 +1,8 @@
 export type PurchaseStatus = "draft" | "registered" | "annulled";
-export type PaymentStatus = "pending" | "paid";
+export type PaymentStatus = "pending" | "partial" | "paid";
 export type PurchaseKind = "merchandise" | "expense" | "additional_cost";
-export type AllocationMethod = "by_quantity" | "by_value" | "manual";
+export type AllocationMethod = "by_quantity" | "by_value" | "by_weight" | "manual";
+export type PurchasePaymentMethod = "cash" | "transfer" | "check" | "other";
 
 export interface MerchandisePurchaseLine {
   line_kind: "item";
@@ -12,6 +13,7 @@ export interface MerchandisePurchaseLine {
   product_description: string;
   quantity: string;
   gross_total: string;
+  unit_price?: string | null;
   operation_type: string;
   operation_type_label?: string;
   taxable_base: string;
@@ -30,6 +32,7 @@ export interface ExpensePurchaseLine {
   account_name: string;
   description: string;
   gross_total: string;
+  unit_price?: string | null;
   operation_type: string;
   taxable_base: string;
   igv_amount: string;
@@ -75,6 +78,23 @@ export interface PurchaseTotals {
   detraction_pen: string;
 }
 
+/** Percepción, retención 4ta y neto a pagar (charges.payable). */
+export interface PurchaseCharges {
+  perception: string;
+  perception_pen: string;
+  retention_percent: string | null;
+  retention: string;
+  retention_pen: string;
+  payable: string;
+  payable_pen: string;
+}
+
+export interface PurchaseInstallment {
+  number: number;
+  due_date: string;
+  amount: string;
+}
+
 export interface PurchaseDetraction {
   code: string;
   percent: string;
@@ -114,6 +134,8 @@ export interface Purchase {
   payment_term: string;
   credit_days: number;
   currency: string;
+  prices_include_tax?: boolean;
+  purchase_order_id?: string | null;
   exchange_rate: string;
   default_warehouse_id: string | null;
   default_operation_type: string;
@@ -129,6 +151,8 @@ export interface Purchase {
   allocations?: CostAllocation[];
   lines: PurchaseLine[];
   totals: PurchaseTotals;
+  charges?: PurchaseCharges;
+  installments?: PurchaseInstallment[];
   created_at: string | null;
   annulled_at: string | null;
 }
@@ -138,6 +162,7 @@ export interface PurchaseFilters {
   supplierId?: string;
   status?: PurchaseStatus | "";
   kind?: PurchaseKind | "";
+  paymentStatus?: PaymentStatus | "";
   search?: string;
   page: number;
   perPage: number;
@@ -147,15 +172,22 @@ export interface MerchandiseLineInput {
   productId: string;
   warehouseId: string;
   quantity: number;
-  grossTotal: number;
+  /** Precio unitario (con o sin IGV según pricesIncludeTax). */
+  unitPrice: number;
   operationType: string;
 }
 
 export interface ExpenseLineInput {
   accountId: string;
   description: string;
-  grossTotal: number;
+  /** Importe de la línea (cantidad 1). */
+  unitPrice: number;
   operationType: string;
+}
+
+export interface InstallmentInput {
+  dueDate: string;
+  amount: number;
 }
 
 export interface ManualAllocationInput {
@@ -180,7 +212,19 @@ export interface PurchaseGapFields {
   modifiedIssueDate?: string | null;
 }
 
-export interface PurchaseInput extends PurchaseGapFields {
+/** Campos de captura estilo SiempreSoft (precios, percepción, retención, cuotas, pago al contado). */
+export interface PurchaseExtraFields {
+  pricesIncludeTax: boolean;
+  perceptionAmount?: number | null;
+  retentionPercent?: number | null;
+  installments?: InstallmentInput[];
+  treasuryAccountId?: string | null;
+  paymentMethod?: PurchasePaymentMethod | null;
+  paymentReference?: string | null;
+}
+
+export interface PurchaseInput extends PurchaseGapFields, PurchaseExtraFields {
+  purchaseOrderId?: string | null;
   documentType: string;
   series: string;
   number: string;
@@ -199,7 +243,7 @@ export interface PurchaseInput extends PurchaseGapFields {
   lines: MerchandiseLineInput[];
 }
 
-export interface ExpensePurchaseInput extends PurchaseGapFields {
+export interface ExpensePurchaseInput extends PurchaseGapFields, PurchaseExtraFields {
   documentType: string;
   series: string;
   number: string;
@@ -216,7 +260,7 @@ export interface ExpensePurchaseInput extends PurchaseGapFields {
   lines: ExpenseLineInput[];
 }
 
-export interface AdditionalCostPurchaseInput extends PurchaseGapFields {
+export interface AdditionalCostPurchaseInput extends PurchaseGapFields, PurchaseExtraFields {
   documentType: string;
   series: string;
   number: string;
@@ -241,18 +285,21 @@ export interface PurchasePreview {
   lines: MerchandisePurchaseLine[];
   totals: PurchaseTotals;
   exchange_rate: string;
+  charges: PurchaseCharges;
 }
 
 export interface ExpensePurchasePreview {
   lines: ExpensePurchaseLine[];
   totals: PurchaseTotals;
   exchange_rate: string;
+  charges: PurchaseCharges;
 }
 
 export interface AdditionalCostPurchasePreview {
   lines: ExpensePurchaseLine[];
   totals: PurchaseTotals;
   exchange_rate: string;
+  charges: PurchaseCharges;
   amount_to_allocate_pen: string;
   allocations: CostAllocation[];
 }
@@ -282,19 +329,23 @@ export const PURCHASE_STATUS_OPTIONS: { value: PurchaseStatus; label: string; co
 
 export const PAYMENT_STATUS_OPTIONS: { value: PaymentStatus; label: string; color: string }[] = [
   { value: "pending", label: "Pendiente", color: "warning" },
+  { value: "partial", label: "Pago parcial", color: "processing" },
   { value: "paid", label: "Pagado", color: "success" },
 ];
 
 export interface PurchasePayment {
   id: string;
-  company_id: string;
+  payment_number?: number | null;
   purchase_id: string;
   paid_at: string;
   amount: string;
   amount_pen: string;
   method: string | null;
   method_label?: string | null;
+  treasury_account_label?: string | null;
+  reference?: string | null;
   notes: string | null;
+  documents_count?: number;
   created_at: string | null;
 }
 
@@ -305,6 +356,8 @@ export interface RegisterPurchasePaymentInput {
   method?: string | null;
   notes?: string | null;
   markFullyPaid?: boolean;
+  treasuryAccountId?: string | null;
+  reference?: string | null;
 }
 
 export const PURCHASE_KIND_OPTIONS: { value: PurchaseKind; label: string }[] = [
@@ -315,12 +368,45 @@ export const PURCHASE_KIND_OPTIONS: { value: PurchaseKind; label: string }[] = [
 
 export const DOCUMENT_TYPE_OPTIONS = [
   { value: "01", label: "Factura" },
-  { value: "03", label: "Boleta" },
+  { value: "02", label: "Recibo por honorarios" },
+  { value: "03", label: "Boleta de venta" },
   { value: "04", label: "Liquidación de compra" },
   { value: "07", label: "Nota de crédito" },
   { value: "08", label: "Nota de débito" },
   { value: "12", label: "Ticket / cinta" },
+  { value: "14", label: "Servicios públicos" },
+  { value: "50", label: "DUA (Declaración Única de Aduanas)" },
 ];
+
+/** Tipos de comprobante permitidos por tipo de compra (validado también en el back). */
+export const DOCUMENT_TYPES_BY_KIND: Record<PurchaseKind, string[]> = {
+  merchandise: ["01", "03", "04", "07", "08", "12", "50"],
+  expense: ["01", "02", "03", "04", "07", "08", "12", "14"],
+  additional_cost: ["01", "03", "04", "07", "08", "12"],
+};
+
+export function documentTypeOptionsFor(kind: PurchaseKind) {
+  const allowed = DOCUMENT_TYPES_BY_KIND[kind];
+  return DOCUMENT_TYPE_OPTIONS.filter((o) => allowed.includes(o.value)).map((o) => ({
+    value: o.value,
+    label: `${o.value} - ${o.label}`,
+  }));
+}
+
+export function documentTypeLabel(code: string): string {
+  return DOCUMENT_TYPE_OPTIONS.find((o) => o.value === code)?.label ?? code;
+}
+
+/** Boleta (03) y recibo por honorarios (02) no dan crédito fiscal: todas las líneas van No gravadas. */
+export function forcesNonTaxed(documentType: string | undefined): boolean {
+  return documentType === "02" || documentType === "03";
+}
+
+export const NON_TAXED_OPERATION = "non_taxed";
+export const FEE_RECEIPT_DOCUMENT = "02";
+/** Umbral (PEN) desde el cual se retiene 4ta categoría (8 %) en recibos por honorarios. */
+export const FEE_RETENTION_THRESHOLD_PEN = 1500;
+export const FEE_RETENTION_DEFAULT_PERCENT = 8;
 
 export const CURRENCY_OPTIONS = [
   { value: "PEN", label: "Soles (PEN)" },

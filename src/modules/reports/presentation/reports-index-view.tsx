@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { DatabaseOutlined, FileTextOutlined, RightOutlined } from "@ant-design/icons";
+import { AuditOutlined, DatabaseOutlined, FileTextOutlined, RightOutlined } from "@ant-design/icons";
 import { Card, Col, Flex, Row, Typography } from "antd";
 
 import { PageHeader } from "@/shared/ui/page-header";
@@ -12,6 +12,12 @@ const REPORTS = [
     title: "Registro de Compras 8.1",
     description: "Libro de compras del periodo contable, con exportación CSV y TXT para SIRE.",
     icon: <FileTextOutlined />,
+  },
+  {
+    href: "/reports/fee-receipts",
+    title: "Libro de retenciones 4ta categoría",
+    description: "Recibos por honorarios del mes con monto bruto, retención de renta y neto pagado.",
+    icon: <AuditOutlined />,
   },
   {
     href: "/inventory/kardex",
@@ -27,7 +33,7 @@ export function ReportsIndexView() {
       <PageHeader
         eyebrow="Reportes"
         title="Reportes"
-        subtitle="Kardex valorizado y Registro de Compras (formato 8.1 / SIRE)."
+        subtitle="Registro de Compras (formato 8.1 / SIRE), retenciones de 4ta categoría y Kardex valorizado."
       />
 
       <Row gutter={[20, 20]}>

@@ -13,10 +13,15 @@ function toPayload(input: GoodsReceptionInput) {
     supplier_id: input.supplierId || null,
     reception_number: input.receptionNumber || null,
     observations: input.observations || null,
+    ...(input.purchaseOrderId ? { purchase_order_id: input.purchaseOrderId } : {}),
+    guide_series: input.guideSeries || null,
+    guide_number: input.guideNumber || null,
     lines: input.lines.map((line) => ({
       product_id: line.productId,
       quantity: line.quantity,
       observations: line.observations || null,
+      ...(line.purchaseOrderLineNumber ? { purchase_order_line_number: line.purchaseOrderLineNumber } : {}),
+      ...(line.unitPrice != null ? { unit_price: line.unitPrice } : {}),
     })),
   };
 }

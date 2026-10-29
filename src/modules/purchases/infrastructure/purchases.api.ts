@@ -13,6 +13,7 @@ import type {
   PurchaseGapFields,
   PurchaseInput,
   PurchasePreview,
+  PurchaseExtraFields,
   PurchasePayment,
   RegisterPurchasePaymentInput,
 } from "../domain/purchase.types";
@@ -22,7 +23,7 @@ function toMerchandiseLinePayload(line: PurchaseInput["lines"][number]) {
     product_id: line.productId,
     warehouse_id: line.warehouseId,
     quantity: line.quantity,
-    gross_total: line.grossTotal,
+    unit_price: line.unitPrice,
     operation_type: line.operationType,
   };
 }
@@ -31,7 +32,7 @@ function toExpenseLinePayload(line: ExpensePurchaseInput["lines"][number]) {
   return {
     account_id: line.accountId,
     description: line.description,
-    gross_total: line.grossTotal,
+    unit_price: line.unitPrice,
     operation_type: line.operationType,
   };
 }
@@ -53,6 +54,28 @@ function toGapPayload(input: PurchaseGapFields) {
   };
 }
 
+/** Precios, percepción y retención: afectan al cálculo (register y preview). */
+function toPricingPayload(input: Pick<PurchaseExtraFields, "pricesIncludeTax" | "perceptionAmount" | "retentionPercent">) {
+  return {
+    prices_include_tax: input.pricesIncludeTax,
+    perception_amount: input.perceptionAmount ?? null,
+    retention_percent: input.retentionPercent ?? null,
+  };
+}
+
+/** Cuotas (crédito) y pago automático desde caja / cta. cte. (contado). */
+function toSettlementPayload(input: PurchaseExtraFields & { paymentTerm: string }) {
+  const isCash = input.paymentTerm === "cash";
+  return {
+    installments: isCash
+      ? []
+      : (input.installments ?? []).map((row) => ({ due_date: row.dueDate, amount: row.amount })),
+    treasury_account_id: isCash ? input.treasuryAccountId || null : null,
+    payment_method: isCash && input.treasuryAccountId ? input.paymentMethod || null : null,
+    payment_reference: isCash && input.treasuryAccountId ? input.paymentReference || null : null,
+  };
+}
+
 function toMerchandisePayload(input: PurchaseInput) {
   return {
     document_type: input.documentType,
@@ -70,8 +93,11 @@ function toMerchandisePayload(input: PurchaseInput) {
     accounting_category_code: input.accountingCategoryCode || null,
     goods_services_class: input.goodsServicesClass || null,
     observations: input.observations || null,
+    purchase_order_id: input.purchaseOrderId || null,
     lines: input.lines.map(toMerchandiseLinePayload),
     ...toGapPayload(input),
+    ...toPricingPayload(input),
+    ...toSettlementPayload(input),
   };
 }
 
@@ -92,6 +118,8 @@ function toExpensePayload(input: ExpensePurchaseInput) {
     observations: input.observations || null,
     lines: input.lines.map(toExpenseLinePayload),
     ...toGapPayload(input),
+    ...toPricingPayload(input),
+    ...toSettlementPayload(input),
   };
 }
 
@@ -109,17 +137,22 @@ function toAdditionalCostPayload(input: AdditionalCostPurchaseInput) {
   };
 }
 
-type PreviewGap = Pick<
+export type PreviewGap = Pick<
   PurchaseGapFields,
   "iscAmount" | "discountAmount" | "detractionCode" | "detractionPercent"
->;
+> &
+  Pick<PurchaseExtraFields, "pricesIncludeTax" | "perceptionAmount" | "retentionPercent"> & {
+    documentType?: string;
+  };
 
 function toPreviewGapPayload(input: PreviewGap) {
   return {
+    document_type: input.documentType || null,
     isc_amount: input.iscAmount ?? 0,
     discount_amount: input.discountAmount ?? 0,
     detraction_code: input.detractionCode || null,
     detraction_percent: input.detractionPercent ?? null,
+    ...toPricingPayload(input),
   };
 }
 
@@ -131,6 +164,7 @@ export const purchasesApi = {
         supplier_id: filters.supplierId || undefined,
         status: filters.status || undefined,
         kind: filters.kind || undefined,
+        payment_status: filters.paymentStatus || undefined,
         search: filters.search || undefined,
         page: filters.page,
         per_page: filters.perPage,
@@ -151,6 +185,11 @@ export const purchasesApi = {
 
   async detractions(): Promise<CatalogEntry[]> {
     const { data } = await apiClient.get<ApiResponse<CatalogEntry[]>>("/catalogs/detractions");
+    return data.data;
+  },
+
+  async goodsServicesClassifications(): Promise<CatalogEntry[]> {
+    const { data } = await apiClient.get<ApiResponse<CatalogEntry[]>>("/catalogs/goods_services_classifications");
     return data.data;
   },
 
@@ -244,6 +283,8 @@ export const purchasesApi = {
       method: input.method || null,
       notes: input.notes || null,
       mark_fully_paid: input.markFullyPaid ?? false,
+      treasury_account_id: input.treasuryAccountId || null,
+      reference: input.reference || null,
     });
     return data.data;
   },

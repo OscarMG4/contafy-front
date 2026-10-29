@@ -1,13 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { PlusOutlined } from "@ant-design/icons";
+import { FileDoneOutlined, PlusOutlined } from "@ant-design/icons";
 import { App, Button, DatePicker, Drawer, Empty, Flex, Form, Input, InputNumber, Select, Tag, Typography, type TableProps } from "antd";
 import dayjs from "dayjs";
 
 import { useCurrentUser } from "@/modules/auth/application/use-auth";
 import { useActiveCompany } from "@/modules/companies/application/active-company";
 import { useProducts } from "@/modules/products/application/use-products";
+import { formatOrderNumber } from "@/modules/purchase-orders/presentation/purchase-order-format";
+import { SupplierSelect } from "@/modules/treasury/presentation/supplier-select";
 import { useWarehouses } from "@/modules/warehouses/application/use-warehouses";
 import { ApiError } from "@/core/http/api-error";
 import { applyApiFieldErrors } from "@/shared/lib/form-errors";
@@ -23,12 +25,16 @@ import {
   type GoodsReceptionInput,
   type GoodsReceptionStatus,
 } from "../domain/reception.types";
+import { ReceptionFromOrderModal } from "./reception-from-order-modal";
 
 const WRITE_ROLES = new Set(["owner", "admin", "accountant"]);
 
 type FormValues = {
   receptionDate: dayjs.Dayjs;
   warehouseId: string;
+  supplierId?: string;
+  guideSeries?: string;
+  guideNumber?: string;
   receptionNumber?: string;
   observations?: string;
   lines: { productId: string; quantity: number }[];
@@ -44,6 +50,7 @@ export function ReceptionsView() {
     status: "open",
   });
   const [open, setOpen] = useState(false);
+  const [fromOrderOpen, setFromOrderOpen] = useState(false);
   const [form] = Form.useForm<FormValues>();
   const { data, isFetching, isLoading } = useReceptions(filters);
   const create = useCreateReception();
@@ -51,6 +58,11 @@ export function ReceptionsView() {
   const { data: warehousesPage } = useWarehouses({ page: 1, perPage: 200, status: "active" });
   const { data: productsPage } = useProducts({ page: 1, perPage: 200, status: "active" });
   const canWrite = WRITE_ROLES.has(user?.role ?? "");
+
+  const warehouseNames = useMemo(
+    () => new Map((warehousesPage?.items ?? []).map((w) => [w.id, w.name])),
+    [warehousesPage],
+  );
 
   const updateFilters = (patch: Partial<GoodsReceptionFilters>) =>
     setFilters((current) => ({ ...current, page: 1, ...patch }));
@@ -75,6 +87,32 @@ export function ReceptionsView() {
       dataIndex: "reception_date",
       width: 120,
       render: (d: string) => dayjs(d).format("DD/MM/YYYY"),
+    },
+    {
+      title: "Proveedor",
+      dataIndex: "supplier_business_name",
+      ellipsis: true,
+      render: (name: string | null | undefined) => name ?? "—",
+    },
+    {
+      title: "Almacén",
+      dataIndex: "warehouse_id",
+      width: 160,
+      ellipsis: true,
+      render: (id: string) => warehouseNames.get(id) ?? "—",
+    },
+    {
+      title: "O/C N°",
+      dataIndex: "purchase_order_number",
+      width: 110,
+      render: (n: number | null | undefined) => (n ? formatOrderNumber(n) : "—"),
+    },
+    {
+      title: "Guía",
+      key: "guide",
+      width: 130,
+      render: (_, row) =>
+        row.guide_series || row.guide_number ? [row.guide_series, row.guide_number].filter(Boolean).join("-") : "—",
     },
     {
       title: "Líneas",
@@ -116,6 +154,9 @@ export function ReceptionsView() {
     const input: GoodsReceptionInput = {
       receptionDate: values.receptionDate.format("YYYY-MM-DD"),
       warehouseId: values.warehouseId,
+      supplierId: values.supplierId || null,
+      guideSeries: values.guideSeries || null,
+      guideNumber: values.guideNumber || null,
       receptionNumber: values.receptionNumber || null,
       observations: values.observations || null,
       lines: values.lines.map((l) => ({ productId: l.productId, quantity: l.quantity })),
@@ -129,6 +170,9 @@ export function ReceptionsView() {
       onError: (error) => applyApiFieldErrors(form, error, {
         reception_date: "receptionDate",
         warehouse_id: "warehouseId",
+        supplier_id: "supplierId",
+        guide_series: "guideSeries",
+        guide_number: "guideNumber",
         reception_number: "receptionNumber",
         lines: "lines",
       }),
@@ -161,19 +205,25 @@ export function ReceptionsView() {
         }
         action={
           canWrite ? (
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => {
-                form.setFieldsValue({
-                  receptionDate: dayjs(),
-                  lines: [{ quantity: 1 }],
-                });
-                setOpen(true);
-              }}
-            >
-              Nueva recepción
-            </Button>
+            <>
+              <Button icon={<FileDoneOutlined />} onClick={() => setFromOrderOpen(true)}>
+                Nueva recepción desde O/C
+              </Button>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  form.setFieldsValue({
+                    receptionDate: dayjs(),
+                    warehouseId: (warehousesPage?.items.find((w) => w.type === "main") ?? warehousesPage?.items[0])?.id,
+                    lines: [{ quantity: 1 }],
+                  });
+                  setOpen(true);
+                }}
+              >
+                Nueva recepción
+              </Button>
+            </>
           ) : undefined
         }
         loading={isLoading || isFetching}
@@ -222,6 +272,19 @@ export function ReceptionsView() {
           <Form.Item name="warehouseId" label="Almacén" rules={[{ required: true }]}>
             <Select showSearch optionFilterProp="label" options={warehouseOptions} />
           </Form.Item>
+          <Form.Item name="supplierId" label="Proveedor">
+            <SupplierSelect allowClear placeholder="RUC o razón social (opcional)" />
+          </Form.Item>
+          <Form.Item label="Guía de remisión" style={{ marginBottom: 0 }}>
+            <Flex gap={8}>
+              <Form.Item name="guideSeries" style={{ width: 100 }}>
+                <Input placeholder="Serie" maxLength={4} />
+              </Form.Item>
+              <Form.Item name="guideNumber" style={{ flex: 1 }}>
+                <Input placeholder="Número" maxLength={10} />
+              </Form.Item>
+            </Flex>
+          </Form.Item>
           <Form.Item name="receptionNumber" label="Número (opcional)">
             <Input placeholder="Auto: R-000001" maxLength={20} />
           </Form.Item>
@@ -266,6 +329,8 @@ export function ReceptionsView() {
           </Form.List>
         </Form>
       </Drawer>
+
+      <ReceptionFromOrderModal open={fromOrderOpen} onClose={() => setFromOrderOpen(false)} />
     </>
   );
 }

@@ -15,10 +15,12 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { useAnnulPurchase, usePurchases } from "../application/use-purchases";
 import {
   PAYMENT_STATUS_OPTIONS,
+  PURCHASE_KIND_OPTIONS,
   PURCHASE_STATUS_OPTIONS,
   type PaymentStatus,
   type Purchase,
   type PurchaseFilters,
+  type PurchaseKind,
   type PurchaseStatus,
 } from "../domain/purchase.types";
 import { PurchaseDetailDrawer } from "./purchase-detail-drawer";
@@ -134,7 +136,15 @@ export function PurchasesView() {
       key: "total",
       width: 130,
       align: "right",
+      responsive: ["lg"],
       render: (_, row) => money(row.totals.total, row.currency),
+    },
+    {
+      title: "Neto a pagar",
+      key: "payable",
+      width: 130,
+      align: "right",
+      render: (_, row) => money(row.charges?.payable ?? row.totals.total, row.currency),
     },
     {
       title: "Estado",
@@ -148,10 +158,11 @@ export function PurchasesView() {
     {
       title: "Estado pago",
       dataIndex: "payment_status",
-      width: 110,
-      render: (status: PaymentStatus | undefined) => {
+      width: 120,
+      render: (status: PaymentStatus | undefined, row) => {
+        if (row.status === "annulled") return "—";
         const opt = PAYMENT_STATUS_OPTIONS.find((o) => o.value === status);
-        return <Tag color={opt?.color}>{opt?.label ?? status ?? "—"}</Tag>;
+        return <Tag color={opt?.color}>{opt?.label ?? row.payment_status_label ?? status ?? "—"}</Tag>;
       },
     },
     {
@@ -221,6 +232,22 @@ export function PurchasesView() {
                 label: o.label,
               }))}
               onChange={(status) => updateFilters({ status: (status as PurchaseStatus) ?? "" })}
+            />
+            <Select
+              allowClear
+              placeholder="Tipo"
+              style={{ minWidth: 150 }}
+              value={filters.kind || undefined}
+              options={PURCHASE_KIND_OPTIONS}
+              onChange={(kind) => updateFilters({ kind: (kind as PurchaseKind) ?? "" })}
+            />
+            <Select
+              allowClear
+              placeholder="Estado de pago"
+              style={{ minWidth: 150 }}
+              value={filters.paymentStatus || undefined}
+              options={PAYMENT_STATUS_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+              onChange={(paymentStatus) => updateFilters({ paymentStatus: (paymentStatus as PaymentStatus) ?? "" })}
             />
           </>
         }

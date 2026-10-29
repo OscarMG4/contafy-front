@@ -6,6 +6,9 @@ export interface GoodsReceptionLine {
   quantity: string;
   purchase_id: string | null;
   observations: string | null;
+  /** Línea de la O/C atendida (recepción desde O/C). */
+  purchase_order_line_number?: number | null;
+  unit_price?: string | null;
 }
 
 export interface GoodsReception {
@@ -18,6 +21,12 @@ export interface GoodsReception {
   status: GoodsReceptionStatus;
   status_label?: string;
   observations: string | null;
+  purchase_order_id?: string | null;
+  /** N° correlativo de la O/C (se muestra como OC-000001). */
+  purchase_order_number?: number | null;
+  supplier_business_name?: string | null;
+  guide_series?: string | null;
+  guide_number?: string | null;
   lines: GoodsReceptionLine[];
   created_at: string | null;
 }
@@ -33,6 +42,9 @@ export interface GoodsReceptionLineInput {
   productId: string;
   quantity: number;
   observations?: string | null;
+  /** Obligatorio cuando la recepción viene de una O/C. */
+  purchaseOrderLineNumber?: number | null;
+  unitPrice?: number | null;
 }
 
 export interface GoodsReceptionInput {
@@ -41,6 +53,9 @@ export interface GoodsReceptionInput {
   supplierId?: string | null;
   receptionNumber?: string | null;
   observations?: string | null;
+  purchaseOrderId?: string | null;
+  guideSeries?: string | null;
+  guideNumber?: string | null;
   lines: GoodsReceptionLineInput[];
 }
 

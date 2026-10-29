@@ -52,7 +52,16 @@ export function ChartOfAccountsView() {
     {
       title: "Nombre",
       dataIndex: "name",
-      render: (name: string, account: Account) => <Typography.Text strong={account.is_leaf}>{name}</Typography.Text>,
+      render: (name: string, account: Account) => (
+        <>
+          <Typography.Text strong={account.is_leaf}>{name}</Typography.Text>
+          {account.debit_destination_code && account.credit_destination_code ? (
+            <Tag color="purple" variant="filled" style={{ marginLeft: 8 }}>
+              Destino {account.debit_destination_code} / {account.credit_destination_code}
+            </Tag>
+          ) : null}
+        </>
+      ),
     },
     {
       title: "Naturaleza",

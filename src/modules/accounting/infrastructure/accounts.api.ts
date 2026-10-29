@@ -16,6 +16,8 @@ function toUpdatePayload(input: AccountUpdateInput) {
   return {
     name: input.name,
     active: input.active,
+    debit_destination_code: input.debitDestinationCode || null,
+    credit_destination_code: input.creditDestinationCode || null,
   };
 }
 
