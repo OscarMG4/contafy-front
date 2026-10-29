@@ -62,14 +62,29 @@ export const NAVIGATION: NavItem[] = [
     key: "/purchases-menu",
     label: "Compras",
     icon: <ShoppingCartOutlined />,
-    children: [{ key: "/purchases", label: "Registro de compras" }],
+    children: [
+      { key: "/purchases/orders", label: "Órdenes de compra" },
+      { key: "/purchases", label: "Registro de compras" },
+    ],
   },
-  { key: "/banks", label: "Bancos", icon: <BankOutlined /> },
+  {
+    key: "/treasury",
+    label: "Tesorería",
+    icon: <BankOutlined />,
+    children: [
+      { key: "/treasury/accounts", label: "Cajas y bancos" },
+      { key: "/treasury/payments", label: "Pagos a proveedores" },
+      { key: "/treasury/payables", label: "Cuentas por pagar" },
+    ],
+  },
   {
     key: "/reports",
     label: "Reportes",
     icon: <BarChartOutlined />,
-    children: [{ key: "/reports/purchase-register", label: "Registro de Compras 8.1" }],
+    children: [
+      { key: "/reports/purchase-register", label: "Registro de Compras 8.1" },
+      { key: "/reports/fee-receipts", label: "Libro de retenciones 4ta" },
+    ],
   },
   { key: "/settings", label: "Configuración", icon: <SettingOutlined /> },
 ];

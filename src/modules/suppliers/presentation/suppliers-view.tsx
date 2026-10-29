@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { EditOutlined, InboxOutlined, MoreOutlined, PlusOutlined, RollbackOutlined } from "@ant-design/icons";
-import { App, Button, Card, Dropdown, Empty, Select, Tag, Typography, type TableProps } from "antd";
+import { EditOutlined, InboxOutlined, MoreOutlined, PlusOutlined, RollbackOutlined, UploadOutlined } from "@ant-design/icons";
+import { App, Button, Card, Dropdown, Empty, Flex, Select, Tag, Typography, type TableProps } from "antd";
 
 import { useCurrentUser } from "@/modules/auth/application/use-auth";
 import { useActiveCompany } from "@/modules/companies/application/active-company";
@@ -12,6 +12,7 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { useChangeSupplierStatus, useSuppliers } from "../application/use-suppliers";
 import { SUPPLIER_STATUS_OPTIONS, type Supplier, type SupplierFilters } from "../domain/supplier.types";
 import { SupplierFormDrawer } from "./supplier-form-drawer";
+import { SupplierImportModal } from "./supplier-import-modal";
 
 const WRITE_ROLES = new Set(["owner", "admin", "accountant"]);
 
@@ -30,6 +31,7 @@ export function SuppliersView() {
   }>({ open: false, supplier: null });
   const { data, isFetching, isLoading } = useSuppliers(filters);
   const changeStatus = useChangeSupplierStatus();
+  const [importOpen, setImportOpen] = useState(false);
   const canWrite = WRITE_ROLES.has(user?.role ?? "");
 
   const updateFilters = (patch: Partial<SupplierFilters>) =>
@@ -188,9 +190,14 @@ export function SuppliersView() {
         }
         action={
           canWrite && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-              Nuevo proveedor
-            </Button>
+            <Flex gap={8}>
+              <Button icon={<UploadOutlined />} onClick={() => setImportOpen(true)}>
+                Importar Excel
+              </Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+                Nuevo proveedor
+              </Button>
+            </Flex>
           )
         }
         rowKey="id"
@@ -227,6 +234,8 @@ export function SuppliersView() {
         supplier={drawer.supplier}
         onClose={() => setDrawer({ open: false, supplier: null })}
       />
+
+      <SupplierImportModal open={importOpen} onClose={() => setImportOpen(false)} />
     </>
   );
 }

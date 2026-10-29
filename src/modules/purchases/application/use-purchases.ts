@@ -1,6 +1,13 @@
 "use client";
 
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 
 import { useActiveCompany } from "@/modules/companies/application/active-company";
 
@@ -11,7 +18,7 @@ import type {
   PurchaseInput,
   RegisterPurchasePaymentInput,
 } from "../domain/purchase.types";
-import { kardexApi, purchasesApi } from "../infrastructure/purchases.api";
+import { kardexApi, purchasesApi, type PreviewGap } from "../infrastructure/purchases.api";
 
 export const purchaseKeys = {
   all: ["purchases"] as const,
@@ -21,9 +28,19 @@ export const purchaseKeys = {
   operationTypes: ["purchases", "operation-types"] as const,
   allocationMethods: ["purchases", "allocation-methods"] as const,
   detractions: ["catalogs", "detractions"] as const,
+  goodsServicesClasses: ["catalogs", "goods_services_classifications"] as const,
   kardex: (companyId: string, productId: string, warehouseId: string, from?: string, to?: string) =>
     ["kardex", companyId, productId, warehouseId, from, to] as const,
 };
+
+/** Una compra cambia saldos de tesorería, O/C pendientes y recepciones: refresca todo lo relacionado. */
+function invalidateAfterPurchaseChange(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: purchaseKeys.all }),
+    queryClient.invalidateQueries({ queryKey: ["treasury"] }),
+    queryClient.invalidateQueries({ queryKey: ["purchase-orders"] }),
+  ]);
+}
 
 export function usePurchases(filters: PurchaseFilters) {
   const { company } = useActiveCompany();
@@ -72,7 +89,7 @@ export function useCreatePurchase() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: PurchaseInput) => purchasesApi.create(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: purchaseKeys.all }),
+    onSuccess: () => invalidateAfterPurchaseChange(queryClient),
   });
 }
 
@@ -80,7 +97,7 @@ export function useCreateExpensePurchase() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: ExpensePurchaseInput) => purchasesApi.createExpense(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: purchaseKeys.all }),
+    onSuccess: () => invalidateAfterPurchaseChange(queryClient),
   });
 }
 
@@ -88,7 +105,7 @@ export function useCreateAdditionalCostPurchase() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: AdditionalCostPurchaseInput) => purchasesApi.createAdditionalCost(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: purchaseKeys.all }),
+    onSuccess: () => invalidateAfterPurchaseChange(queryClient),
   });
 }
 
@@ -96,7 +113,7 @@ export function useAnnulPurchase() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => purchasesApi.annul(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: purchaseKeys.all }),
+    onSuccess: () => invalidateAfterPurchaseChange(queryClient),
   });
 }
 
@@ -115,7 +132,7 @@ export function useRegisterPurchasePayment(purchaseId: string | null) {
   return useMutation({
     mutationFn: (input: RegisterPurchasePaymentInput) => purchasesApi.registerPayment(purchaseId!, input),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: purchaseKeys.all });
+      invalidateAfterPurchaseChange(queryClient);
       if (purchaseId && company) {
         queryClient.invalidateQueries({ queryKey: purchaseKeys.payments(company.id, purchaseId) });
         queryClient.invalidateQueries({ queryKey: purchaseKeys.detail(company.id, purchaseId) });
@@ -126,23 +143,15 @@ export function useRegisterPurchasePayment(purchaseId: string | null) {
 
 export function usePreviewPurchase() {
   return useMutation({
-    mutationFn: (
-      input: Pick<
-        PurchaseInput,
-        "currency" | "issueDate" | "lines" | "iscAmount" | "discountAmount" | "detractionCode" | "detractionPercent"
-      >,
-    ) => purchasesApi.preview(input),
+    mutationFn: (input: Pick<PurchaseInput, "currency" | "issueDate" | "lines"> & PreviewGap) =>
+      purchasesApi.preview(input),
   });
 }
 
 export function usePreviewExpensePurchase() {
   return useMutation({
-    mutationFn: (
-      input: Pick<
-        ExpensePurchaseInput,
-        "currency" | "issueDate" | "lines" | "iscAmount" | "discountAmount" | "detractionCode" | "detractionPercent"
-      >,
-    ) => purchasesApi.previewExpense(input),
+    mutationFn: (input: Pick<ExpensePurchaseInput, "currency" | "issueDate" | "lines"> & PreviewGap) =>
+      purchasesApi.previewExpense(input),
   });
 }
 
@@ -151,18 +160,32 @@ export function usePreviewAdditionalCostPurchase() {
     mutationFn: (
       input: Pick<
         AdditionalCostPurchaseInput,
-        | "currency"
-        | "issueDate"
-        | "lines"
-        | "allocationMethod"
-        | "targetPurchaseIds"
-        | "manualAllocations"
-        | "iscAmount"
-        | "discountAmount"
-        | "detractionCode"
-        | "detractionPercent"
-      >,
+        "currency" | "issueDate" | "lines" | "allocationMethod" | "targetPurchaseIds" | "manualAllocations"
+      > &
+        PreviewGap,
     ) => purchasesApi.previewAdditionalCost(input),
+  });
+}
+
+/** Detalle de varias compras a la vez (líneas destino del reparto manual). */
+export function usePurchasesDetails(ids: string[]) {
+  const { company } = useActiveCompany();
+  return useQueries({
+    queries: ids.map((id) => ({
+      queryKey: purchaseKeys.detail(company?.id ?? "", id),
+      queryFn: () => purchasesApi.get(id),
+      enabled: Boolean(company && id),
+      staleTime: 60_000,
+    })),
+  });
+}
+
+/** Clasificación de bienes y servicios (tabla 30 SUNAT). */
+export function useGoodsServicesClassifications() {
+  return useQuery({
+    queryKey: purchaseKeys.goodsServicesClasses,
+    queryFn: purchasesApi.goodsServicesClassifications,
+    staleTime: Infinity,
   });
 }
 

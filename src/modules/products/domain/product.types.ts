@@ -9,6 +9,8 @@ export interface Product {
   existence_type: string;
   default_operation_type: string;
   default_operation_type_label: string | null;
+  /** Peso unitario en kg (para repartir fletes por peso). */
+  unit_weight?: string | null;
   status: ProductStatus;
   created_at: string | null;
 }
@@ -25,6 +27,7 @@ export interface ProductInput {
   unitOfMeasure: string;
   existenceType: string;
   defaultOperationType: string;
+  unitWeight?: number | null;
 }
 
 export interface OperationTypeOption {

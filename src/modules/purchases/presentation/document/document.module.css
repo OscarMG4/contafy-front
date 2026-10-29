@@ -1,0 +1,44 @@
+.selectedRow > td {
+  background: var(--ant-color-primary-bg) !important;
+}
+
+.grid :global(.ant-table-cell) {
+  padding: 2px 4px !important;
+}
+
+.grid :global(.ant-form-item) {
+  margin-bottom: 0;
+}
+
+.readonlyCell {
+  display: block;
+  padding: 0 7px;
+  line-height: 24px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.totalsBox {
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 6px;
+  padding: 8px 12px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  line-height: 22px;
+}
+
+.totalValue {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  min-width: 110px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 4px;
+  padding: 0 6px;
+  background: var(--ant-color-bg-container);
+}

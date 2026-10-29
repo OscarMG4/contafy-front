@@ -77,6 +77,14 @@ export function ProductsView() {
       responsive: ["md"],
     },
     {
+      title: "Peso (kg)",
+      dataIndex: "unit_weight",
+      width: 100,
+      align: "right",
+      responsive: ["lg"],
+      render: (weight: string | null | undefined) => (weight != null ? Number(weight).toLocaleString("es-PE", { maximumFractionDigits: 5 }) : "—"),
+    },
+    {
       title: "Tipo existencia",
       dataIndex: "existence_type",
       width: 140,

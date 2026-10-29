@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { EyeOutlined, MoreOutlined, PlusOutlined, StopOutlined } from "@ant-design/icons";
-import { App, Button, DatePicker, Dropdown, Empty, Select, Tag, Typography, type TableProps } from "antd";
+import { EyeOutlined, MoreOutlined, PlusOutlined, StopOutlined, UploadOutlined } from "@ant-design/icons";
+import { App, Button, DatePicker, Dropdown, Empty, Flex, Select, Tag, Typography, type TableProps } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import { useRouter } from "next/navigation";
 
@@ -15,15 +15,18 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { useAnnulPurchase, usePurchases } from "../application/use-purchases";
 import {
   PAYMENT_STATUS_OPTIONS,
+  PURCHASE_KIND_OPTIONS,
   PURCHASE_STATUS_OPTIONS,
   type PaymentStatus,
   type Purchase,
   type PurchaseFilters,
+  type PurchaseKind,
   type PurchaseStatus,
 } from "../domain/purchase.types";
 import { PurchaseDetailDrawer } from "./purchase-detail-drawer";
 import { PurchaseFormDrawer } from "./purchase-form-drawer";
 import { ExpensePurchaseFormDrawer } from "./expense-purchase-form-drawer";
+import { PurchaseImportModal } from "./purchase-import-modal";
 
 const WRITE_ROLES = new Set(["owner", "admin", "accountant"]);
 
@@ -46,6 +49,7 @@ export function PurchasesView() {
   });
   const [formOpen, setFormOpen] = useState(false);
   const [expenseFormOpen, setExpenseFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
 
   const { data, isFetching, isLoading } = usePurchases(filters);
@@ -134,7 +138,15 @@ export function PurchasesView() {
       key: "total",
       width: 130,
       align: "right",
+      responsive: ["lg"],
       render: (_, row) => money(row.totals.total, row.currency),
+    },
+    {
+      title: "Neto a pagar",
+      key: "payable",
+      width: 130,
+      align: "right",
+      render: (_, row) => money(row.charges?.payable ?? row.totals.total, row.currency),
     },
     {
       title: "Estado",
@@ -148,10 +160,11 @@ export function PurchasesView() {
     {
       title: "Estado pago",
       dataIndex: "payment_status",
-      width: 110,
-      render: (status: PaymentStatus | undefined) => {
+      width: 120,
+      render: (status: PaymentStatus | undefined, row) => {
+        if (row.status === "annulled") return "—";
         const opt = PAYMENT_STATUS_OPTIONS.find((o) => o.value === status);
-        return <Tag color={opt?.color}>{opt?.label ?? status ?? "—"}</Tag>;
+        return <Tag color={opt?.color}>{opt?.label ?? row.payment_status_label ?? status ?? "—"}</Tag>;
       },
     },
     {
@@ -222,36 +235,57 @@ export function PurchasesView() {
               }))}
               onChange={(status) => updateFilters({ status: (status as PurchaseStatus) ?? "" })}
             />
+            <Select
+              allowClear
+              placeholder="Tipo"
+              style={{ minWidth: 150 }}
+              value={filters.kind || undefined}
+              options={PURCHASE_KIND_OPTIONS}
+              onChange={(kind) => updateFilters({ kind: (kind as PurchaseKind) ?? "" })}
+            />
+            <Select
+              allowClear
+              placeholder="Estado de pago"
+              style={{ minWidth: 150 }}
+              value={filters.paymentStatus || undefined}
+              options={PAYMENT_STATUS_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+              onChange={(paymentStatus) => updateFilters({ paymentStatus: (paymentStatus as PaymentStatus) ?? "" })}
+            />
           </>
         }
         action={
           canWrite ? (
-            <Dropdown
-              menu={{
-                items: [
-                  {
-                    key: "merchandise",
-                    label: "Compra de mercadería",
-                    onClick: () => setFormOpen(true),
-                  },
-                  {
-                    key: "expense",
-                    label: "Compra de gastos",
-                    onClick: () => setExpenseFormOpen(true),
-                  },
-                  {
-                    key: "additional_cost",
-                    label: "Costo adicional",
-                    onClick: () => router.push("/purchases/additional-costs/new"),
-                  },
-                ],
-              }}
-              trigger={["click"]}
-            >
-              <Button type="primary" icon={<PlusOutlined />} disabled={!company}>
-                Nueva compra
+            <Flex gap={8}>
+              <Button icon={<UploadOutlined />} disabled={!company} onClick={() => setImportOpen(true)}>
+                Importar Excel
               </Button>
-            </Dropdown>
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: "merchandise",
+                      label: "Compra de mercadería",
+                      onClick: () => setFormOpen(true),
+                    },
+                    {
+                      key: "expense",
+                      label: "Compra de gastos",
+                      onClick: () => setExpenseFormOpen(true),
+                    },
+                    {
+                      key: "additional_cost",
+                      label: "Costo adicional",
+                      onClick: () => router.push("/purchases/additional-costs/new"),
+                    },
+                  ],
+                }}
+                trigger={["click"]}
+              >
+                <Button type="primary" icon={<PlusOutlined />} disabled={!company}>
+                  Nueva compra
+                </Button>
+              </Dropdown>
+            </Flex>
           ) : undefined
         }
         rowKey="id"
@@ -272,6 +306,7 @@ export function PurchasesView() {
 
       <PurchaseFormDrawer open={formOpen} onClose={() => setFormOpen(false)} />
       <ExpensePurchaseFormDrawer open={expenseFormOpen} onClose={() => setExpenseFormOpen(false)} />
+      <PurchaseImportModal open={importOpen} onClose={() => setImportOpen(false)} />
       <PurchaseDetailDrawer
         purchaseId={detailId}
         open={Boolean(detailId)}

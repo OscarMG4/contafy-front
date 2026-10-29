@@ -31,7 +31,12 @@ export function useCreateReception() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: GoodsReceptionInput) => receptionsApi.create(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: receptionKeys.all }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: receptionKeys.all }),
+        // Recibir desde O/C cambia lo recibido / pendiente y el estado de la orden.
+        queryClient.invalidateQueries({ queryKey: ["purchase-orders"] }),
+      ]),
   });
 }
 

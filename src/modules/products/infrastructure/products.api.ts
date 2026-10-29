@@ -8,6 +8,7 @@ function toPayload(input: ProductInput) {
     unit_of_measure: input.unitOfMeasure,
     existence_type: input.existenceType,
     default_operation_type: input.defaultOperationType,
+    unit_weight: input.unitWeight ?? null,
   };
 }
 

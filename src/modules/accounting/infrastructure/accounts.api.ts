@@ -1,6 +1,14 @@
 import { apiClient, type ApiResponse, type Paginated } from "@/core/http/api-client";
 
-import type { Account, AccountFilters, AccountInput, AccountUpdateInput, NatureOption } from "../domain/account.types";
+import type {
+  Account,
+  AccountFilters,
+  AccountInput,
+  AccountUpdateInput,
+  ChartImportInputRow,
+  ChartImportPlan,
+  NatureOption,
+} from "../domain/account.types";
 
 function toCreatePayload(input: AccountInput) {
   return {
@@ -16,6 +24,8 @@ function toUpdatePayload(input: AccountUpdateInput) {
   return {
     name: input.name,
     active: input.active,
+    debit_destination_code: input.debitDestinationCode || null,
+    credit_destination_code: input.creditDestinationCode || null,
   };
 }
 
@@ -47,5 +57,21 @@ export const accountsApi = {
   async update(id: string, input: AccountUpdateInput): Promise<Account> {
     const { data } = await apiClient.put<ApiResponse<Account>>(`/accounting/accounts/${id}`, toUpdatePayload(input));
     return data.data;
+  },
+
+  async previewImport(rows: ChartImportInputRow[], updateNames: boolean): Promise<ChartImportPlan> {
+    const { data } = await apiClient.post<ApiResponse<ChartImportPlan>>("/accounting/accounts/import/preview", {
+      rows,
+      update_names: updateNames,
+    });
+    return data.data;
+  },
+
+  async import(rows: ChartImportInputRow[], updateNames: boolean): Promise<{ plan: ChartImportPlan; message: string }> {
+    const { data } = await apiClient.post<ApiResponse<ChartImportPlan>>("/accounting/accounts/import", {
+      rows,
+      update_names: updateNames,
+    });
+    return { plan: data.data, message: data.message ?? "Plan importado." };
   },
 };

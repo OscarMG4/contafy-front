@@ -1,6 +1,6 @@
 import { apiClient, type ApiResponse } from "@/core/http/api-client";
 
-import type { PurchaseRegisterFilters, PurchaseRegisterReport } from "../domain/report.types";
+import type { FeeReceiptsReport, PurchaseRegisterFilters, PurchaseRegisterReport } from "../domain/report.types";
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -12,6 +12,14 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 export const reportsApi = {
+  /** Libro de retenciones 4ta categoría (recibos por honorarios, doc 02). */
+  async feeReceipts(period: string): Promise<FeeReceiptsReport> {
+    const { data } = await apiClient.get<ApiResponse<FeeReceiptsReport>>("/reports/fee-receipts", {
+      params: { period },
+    });
+    return data.data;
+  },
+
   async purchaseRegister(filters: PurchaseRegisterFilters): Promise<PurchaseRegisterReport> {
     const { data } = await apiClient.get<ApiResponse<PurchaseRegisterReport>>("/reports/purchase-register", {
       params: {

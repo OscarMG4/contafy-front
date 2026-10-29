@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { TagOutlined } from "@ant-design/icons";
-import { Alert, App, Button, Drawer, Flex, Form, Input, Select, Typography } from "antd";
+import { Alert, App, Button, Drawer, Flex, Form, Input, InputNumber, Select, Typography } from "antd";
 
 import { ApiError } from "@/core/http/api-error";
 import { applyApiFieldErrors } from "@/shared/lib/form-errors";
@@ -21,6 +21,7 @@ const BACKEND_FIELDS: Record<string, keyof ProductInput> = {
   unit_of_measure: "unitOfMeasure",
   existence_type: "existenceType",
   default_operation_type: "defaultOperationType",
+  unit_weight: "unitWeight",
 };
 
 interface ProductFormDrawerProps {
@@ -50,6 +51,7 @@ export function ProductFormDrawer({ open, product, onClose, onSaved }: ProductFo
             unitOfMeasure: product.unit_of_measure,
             existenceType: product.existence_type,
             defaultOperationType: product.default_operation_type,
+            unitWeight: product.unit_weight != null ? Number(product.unit_weight) : null,
           }
         : {},
     );
@@ -135,6 +137,14 @@ export function ProductFormDrawer({ open, product, onClose, onSaved }: ProductFo
           rules={[{ required: true }]}
         >
           <Select loading={loadingOps} options={operationTypes} placeholder="Selecciona el tipo de operación" />
+        </Form.Item>
+
+        <Form.Item
+          label="Peso unitario (kg)"
+          name="unitWeight"
+          extra="Se usa para repartir fletes por peso"
+        >
+          <InputNumber min={0} precision={5} style={{ width: "100%" }} placeholder="Opcional" />
         </Form.Item>
       </Form>
     </Drawer>

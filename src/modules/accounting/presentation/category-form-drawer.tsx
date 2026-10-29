@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BankOutlined } from "@ant-design/icons";
 import { Alert, App, Button, Drawer, Flex, Form, Input, Select, Switch, Typography } from "antd";
 
 import { ApiError } from "@/core/http/api-error";
