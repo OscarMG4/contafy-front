@@ -55,13 +55,7 @@ export function LoginForm() {
       <>
         <Typography.Title
           level={2}
-          style={{
-            marginBottom: 8,
-            fontFamily: "var(--font-display), Georgia, serif",
-            fontWeight: 600,
-            letterSpacing: "-0.03em",
-            fontSize: 28,
-          }}
+          style={{ marginBottom: 8, fontWeight: 650, letterSpacing: "-0.03em", fontSize: 26 }}
         >
           Elige tu estudio
         </Typography.Title>
@@ -104,21 +98,19 @@ export function LoginForm() {
   return (
     <>
       <Typography.Text
-        type="secondary"
-        style={{ display: "block", marginBottom: 8, fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase" }}
+        style={{
+          display: "block",
+          marginBottom: 10,
+          fontSize: 11.5,
+          fontWeight: 600,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          color: "var(--cf-accent)",
+        }}
       >
         Acceso al estudio
       </Typography.Text>
-      <Typography.Title
-        level={2}
-        style={{
-          marginBottom: 8,
-          fontFamily: "var(--font-display), Georgia, serif",
-          fontWeight: 600,
-          letterSpacing: "-0.03em",
-          fontSize: 32,
-        }}
-      >
+      <Typography.Title level={2} style={{ marginBottom: 8, fontWeight: 650, letterSpacing: "-0.03em", fontSize: 30 }}>
         Entra a Contafy
       </Typography.Title>
       <Typography.Paragraph type="secondary" style={{ marginBottom: 28, fontSize: 15, lineHeight: 1.55 }}>
