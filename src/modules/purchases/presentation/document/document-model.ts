@@ -34,6 +34,9 @@ export interface DocumentLineValues {
   operationType?: string;
   /** Línea de la O/C de la que viene (solo informativo). */
   purchaseOrderLineNumber?: number;
+  costCenterId?: string;
+  costCenterCode?: string;
+  costCenterName?: string;
 }
 
 export interface InstallmentValues {
@@ -59,6 +62,11 @@ export interface DocumentFormValues {
   accountingCategoryCode?: string;
   goodsServicesClass?: string;
   pricesIncludeTax: boolean;
+  igvRate?: number;
+  accountingSchemeId?: string;
+  annexId?: string;
+  expenseSheetId?: string;
+  sunatOperationType?: string;
   observations?: string;
   receptionId?: string;
   receptionNumber?: string;
@@ -84,7 +92,7 @@ export interface DocumentFormValues {
   lines: DocumentLineValues[];
 }
 
-export type DocumentTabKey = "general" | "reception" | "payment" | "perception";
+export type DocumentTabKey = "general" | "reception" | "additional" | "payment" | "files" | "info";
 
 export const usesItemLines = (kind: PurchaseKind) => kind === "merchandise";
 
@@ -115,7 +123,7 @@ export function firstIncompleteLine(values: Pick<DocumentFormValues, "lines">, k
     if (isBlankLine(line, kind)) continue;
     const ok = usesItemLines(kind)
       ? Boolean(line.productId && line.quantity && line.unitPrice)
-      : Boolean(line.accountId && line.description?.trim() && line.unitPrice);
+      : Boolean(line.accountId && line.unitPrice);
     if (!ok) return i + 1;
   }
   return null;
@@ -131,8 +139,10 @@ export function lineAmount(line: DocumentLineValues | undefined, kind: PurchaseK
 
 const ymd = (d?: Dayjs | null) => (d ? d.format("YYYY-MM-DD") : "");
 
-function lineOperation(line: DocumentLineValues, values: DocumentFormValues) {
+function lineOperation(line: DocumentLineValues, values: DocumentFormValues, kind?: PurchaseKind) {
   if (forcesNonTaxed(values.documentType)) return NON_TAXED_OPERATION;
+  // En el comprobante de gasto (como en SiempreSoft) la operación es la de la cabecera.
+  if (kind === "expense") return values.defaultOperationType;
   return line.operationType || values.defaultOperationType;
 }
 
@@ -157,6 +167,11 @@ function extraFields(values: DocumentFormValues, kind: PurchaseKind): PurchaseEx
   const isFee = values.documentType === "02";
   return {
     pricesIncludeTax: values.pricesIncludeTax ?? true,
+    igvRate: values.igvRate ?? 18,
+    accountingSchemeId: values.accountingSchemeId || null,
+    annexId: values.annexId || null,
+    expenseSheetId: values.expenseSheetId || null,
+    sunatOperationType: values.sunatOperationType || null,
     perceptionAmount: isFee ? null : values.perceptionAmount || null,
     retentionPercent: kind === "expense" && isFee ? (values.retentionPercent ?? 0) : null,
     installments: (values.installments ?? [])
@@ -177,6 +192,7 @@ function previewGap(values: DocumentFormValues, kind: PurchaseKind): PreviewGap 
     detractionCode: values.detractionCode || null,
     detractionPercent: values.detractionPercent ?? null,
     pricesIncludeTax: extras.pricesIncludeTax,
+    igvRate: extras.igvRate,
     perceptionAmount: extras.perceptionAmount,
     retentionPercent: extras.retentionPercent,
   };
@@ -195,9 +211,10 @@ function itemLines(values: DocumentFormValues) {
 function accountLines(values: DocumentFormValues, kind: PurchaseKind) {
   return filledLines(values, kind).map((line) => ({
     accountId: line.accountId!,
-    description: (line.description ?? "").trim(),
+    description: (line.description?.trim() || line.accountName || line.accountCode || "").slice(0, 250),
     unitPrice: line.unitPrice ?? 0,
-    operationType: lineOperation(line, values),
+    operationType: lineOperation(line, values, kind),
+    costCenterId: line.costCenterId || null,
   }));
 }
 
@@ -278,7 +295,7 @@ export function toPreviewInput(values: DocumentFormValues, kind: PurchaseKind, m
     return lines.length ? { kind, input: { ...base, lines } } : null;
   }
 
-  const lines = accountLines(values, kind).filter((l) => l.accountId && l.description && l.unitPrice > 0);
+  const lines = accountLines(values, kind).filter((l) => l.accountId && l.unitPrice > 0);
   if (!lines.length) return null;
   if (kind === "expense") return { kind, input: { ...base, lines } };
 
@@ -376,6 +393,11 @@ const FIELD_MAP: Record<string, string> = {
   modified_number: "modifiedNumber",
   modified_issue_date: "modifiedIssueDate",
   prices_include_tax: "pricesIncludeTax",
+  igv_rate: "igvRate",
+  accounting_scheme_id: "accountingSchemeId",
+  annex_id: "annexId",
+  expense_sheet_id: "expenseSheetId",
+  sunat_operation_type: "sunatOperationType",
   perception_amount: "perceptionAmount",
   retention_percent: "retentionPercent",
   installments: "installments",
@@ -398,6 +420,7 @@ const LINE_FIELD_MAP: Record<string, string> = {
   gross_total: "unitPrice",
   description: "description",
   operation_type: "operationType",
+  cost_center_id: "costCenterId",
 };
 
 const INSTALLMENT_FIELD_MAP: Record<string, string> = { due_date: "dueDate", amount: "amount" };
@@ -414,13 +437,15 @@ const FIELD_TAB: Record<string, DocumentTabKey | "options"> = {
   treasuryAccountId: "payment",
   paymentMethod: "payment",
   paymentReference: "payment",
-  perceptionAmount: "perception",
-  retentionPercent: "perception",
+  perceptionAmount: "additional",
+  retentionPercent: "additional",
+  pricesIncludeTax: "additional",
+  modifiedDocumentType: "additional",
+  modifiedSeries: "additional",
+  modifiedNumber: "additional",
+  modifiedIssueDate: "additional",
   iscAmount: "options",
   discountAmount: "options",
-  detractionCode: "options",
-  detractionPercent: "options",
-  goodsServicesClass: "options",
 };
 
 export function tabOfField(name: string | number | (string | number)[]): DocumentTabKey | "options" {
@@ -463,4 +488,24 @@ export function applyPurchaseFieldErrors(form: FormInstance, error: unknown, lin
   form.setFields(fields);
   const tab = fields.length ? tabOfField(fields[0].name) : null;
   return { unmapped, tab };
+}
+
+/**
+ * Importe afecto e impuesto de una línea de gasto, como las columnas de SiempreSoft
+ * (cálculo local; el definitivo lo hace el back al calcular).
+ */
+export function lineTax(
+  amount: number,
+  operation: string | undefined,
+  pricesIncludeTax: boolean,
+  igvRate: number,
+): { taxable: number; tax: number } {
+  const taxed = operation === "taxed_taxed" || operation === "taxed_mixed" || operation === "taxed_non_taxed";
+  if (!taxed || amount <= 0) return { taxable: 0, tax: 0 };
+  const rate = igvRate / 100;
+  if (pricesIncludeTax) {
+    const base = round2(amount / (1 + rate));
+    return { taxable: amount, tax: round2(amount - base) };
+  }
+  return { taxable: amount, tax: round2(amount * rate) };
 }

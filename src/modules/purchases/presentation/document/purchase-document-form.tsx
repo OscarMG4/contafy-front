@@ -1,19 +1,30 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalculatorOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons";
-import { Alert, App, Button, Divider, Flex, Form, Tabs, Tooltip, Typography } from "antd";
+import {
+  CalculatorOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  FileExcelOutlined,
+  PlusOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
+import { Alert, App, Button, Descriptions, Divider, Flex, Form, Tabs, Tag, Tooltip, Typography, Upload } from "antd";
 import dayjs from "dayjs";
 
 import { ApiError } from "@/core/http/api-error";
 import { useHydrated } from "@/shared/lib/use-hydrated";
+import { readSpreadsheet } from "@/shared/lib/read-spreadsheet";
+import { detectSheetColumns, readSheetRecords } from "@/shared/lib/spreadsheet-columns";
+import { useCurrentUser } from "@/modules/auth/application/use-auth";
+import { useActiveCompany } from "@/modules/companies/application/active-company";
+import { costCentersApi } from "@/modules/cost-centers/infrastructure/cost-centers.api";
 import { useCategories } from "@/modules/accounting/application/use-categories";
 import type { Account } from "@/modules/accounting/domain/account.types";
 import { accountsApi } from "@/modules/accounting/infrastructure/accounts.api";
 import type { Product } from "@/modules/products/domain/product.types";
 import { productsApi } from "@/modules/products/infrastructure/products.api";
 import type { PurchaseOrder } from "@/modules/purchase-orders/domain/purchase-order.types";
-import { usePaymentTerms } from "@/modules/suppliers/application/use-suppliers";
 import type { Supplier } from "@/modules/suppliers/domain/supplier.types";
 import { useTreasuryAccounts } from "@/modules/treasury/application/use-treasury";
 import { useWarehouses } from "@/modules/warehouses/application/use-warehouses";
@@ -23,8 +34,8 @@ import {
   useCreateAdditionalCostPurchase,
   useCreateExpensePurchase,
   useCreatePurchase,
-  usePurchaseOperationTypes,
 } from "../../application/use-purchases";
+import { useUploadPendingAttachments } from "../../application/use-attachments";
 import {
   documentTypeOptionsFor,
   FEE_RECEIPT_DOCUMENT,
@@ -32,10 +43,13 @@ import {
   FEE_RETENTION_THRESHOLD_PEN,
   forcesNonTaxed,
   NON_TAXED_OPERATION,
+  SIEMPRESOFT_OPERATION_OPTIONS,
   type Purchase,
   type PurchaseKind,
 } from "../../domain/purchase.types";
+import { AdditionalDataTab } from "./additional-data-tab";
 import { AllocationTab } from "./allocation-tab";
+import { AttachmentsPanel } from "../attachments-panel";
 import {
   applyPurchaseFieldErrors,
   filledLines,
@@ -61,7 +75,6 @@ import { lineCellId, LinesGrid } from "./lines-grid";
 import { AccountSearchModal, ProductSearchModal } from "./lookup-modals";
 import { ObservationsModal, OtherOptionsModal } from "./other-options-modal";
 import { PaymentTab } from "./payment-tab";
-import { PerceptionTab } from "./perception-tab";
 import { ReceptionTab } from "./reception-tab";
 import { useDocumentPreview } from "./use-document-preview";
 
@@ -118,6 +131,8 @@ function initialValues(kind: PurchaseKind): Partial<DocumentFormValues> {
     receptionDate: today,
     defaultOperationType: "taxed_taxed",
     pricesIncludeTax: true,
+    igvRate: 18,
+    sunatOperationType: "02",
     accountingCategoryCode: "invoices_payable",
     paymentMethod: "cash",
     iscAmount: 0,
@@ -163,8 +178,10 @@ export function PurchaseDocumentForm({ kind, active, onDone, onCancel }: Purchas
   const { preview, error: previewError, loading: previewLoading, run, schedule, setManualMatches } =
     useDocumentPreview(form, kind);
 
-  const { data: operationTypes } = usePurchaseOperationTypes();
-  const { data: paymentTerms } = usePaymentTerms();
+  const { data: user } = useCurrentUser();
+  const { company } = useActiveCompany();
+  const uploadPending = useUploadPendingAttachments();
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const { data: warehousesPage } = useWarehouses({ page: 1, perPage: 200, status: "active" });
   const { data: categories } = useCategories();
   const { data: treasuryAccounts } = useTreasuryAccounts(true);
@@ -184,17 +201,10 @@ export function PurchaseDocumentForm({ kind, active, onDone, onCancel }: Purchas
   useEnterToNextField(containerRef, hotkeysEnabled);
 
   const documentTypeOptions = useMemo(() => documentTypeOptionsFor(kind), [kind]);
-  const operationOptions = useMemo(
-    () => (operationTypes ?? []).map((o) => ({ value: o.value, label: o.label })),
-    [operationTypes],
-  );
+  const operationOptions = SIEMPRESOFT_OPERATION_OPTIONS;
   const warehouseOptions = useMemo(
     () => (warehousesPage?.items ?? []).map((w) => ({ value: w.id, label: w.name })),
     [warehousesPage],
-  );
-  const paymentTermOptions = useMemo(
-    () => (paymentTerms ?? []).map((t) => ({ value: t.value, label: t.label })),
-    [paymentTerms],
   );
   const categoryOptions = useMemo(
     () =>
@@ -330,10 +340,10 @@ export function PurchaseDocumentForm({ kind, active, onDone, onCancel }: Purchas
       });
       ensureTrailingBlank();
       setSelectedLine(index);
-      focusCell(index, "description");
+      focusCell(index, kind === "expense" ? "costCenterId" : "description");
       schedule();
     },
-    [getLines, form, ensureTrailingBlank, focusCell, schedule],
+    [getLines, form, ensureTrailingBlank, focusCell, schedule, kind],
   );
 
   const targetIndexForNew = useCallback(() => {
@@ -394,6 +404,100 @@ export function PurchaseDocumentForm({ kind, active, onDone, onCancel }: Purchas
     ensureTrailingBlank();
     setSelectedLine(lines.length ? Math.min(selectedLine, lines.length - 1) : null);
     schedule();
+  };
+
+  /** «Nuevo»: va a la fila en blanco del final. «Modificar»: vuelve a la celda de código de la fila elegida. */
+  const newLine = () => {
+    ensureTrailingBlank();
+    const index = targetIndexForNew();
+    setSelectedLine(index);
+    focusCell(index, items ? "productCode" : "accountCode");
+  };
+
+  const modifyLine = () => {
+    if (selectedLine == null) return;
+    focusCell(selectedLine, items ? "quantity" : "unitPrice");
+  };
+
+  /** «Importar...»: carga líneas de gasto desde Excel/CSV (Cuenta, Centro de costo, Importe, Descripción). */
+  const importLines = async (file: File) => {
+    try {
+      const rows = await readSpreadsheet(file);
+      const mapping = detectSheetColumns(
+        rows,
+        [
+          { key: "costCenter", label: "Centro de costo", match: /centro|^cc$|c\.?\s?costo/ },
+          { key: "account", label: "Cuenta", required: true, match: /cuenta|^cta|codigo/ },
+          { key: "amount", label: "Importe", required: true, match: /importe|monto|total|valor/ },
+          { key: "description", label: "Descripción", match: /descrip|glosa|detalle|concepto/ },
+        ],
+        { account: 0, amount: 1 },
+      );
+      const records = readSheetRecords(rows, mapping).filter((r) => /\d/.test(r.values.account));
+      if (!records.length) {
+        message.warning("El archivo no tiene líneas: necesita columnas Cuenta e Importe.");
+        return;
+      }
+
+      const accountCache = new Map<string, Account | null>();
+      const costCenterCache = new Map<string, { id: string; code: string; name: string } | null>();
+      const imported: DocumentLineValues[] = [];
+      const problems: string[] = [];
+      for (const { line, values } of records) {
+        const code = values.account.replace(/[\s.]/g, "");
+        if (!accountCache.has(code)) {
+          const page = await accountsApi.list({ search: code, only_leaves: true, only_active: true, page: 1, perPage: 20 });
+          accountCache.set(code, page.items.find((a) => a.code === code) ?? null);
+        }
+        const account = accountCache.get(code);
+        const amount = Number(values.amount.replace(/[^\d.,-]/g, "").replace(/,(?=\d{3}\b)/g, "").replace(",", "."));
+        if (!account || !(amount > 0)) {
+          problems.push(`Fila ${line}: ${!account ? `la cuenta ${code} no existe o no es de movimiento` : "importe no válido"}`);
+          continue;
+        }
+        let costCenter: { id: string; code: string; name: string } | null = null;
+        if (values.costCenter) {
+          const ccCode = values.costCenter.trim().toUpperCase();
+          if (!costCenterCache.has(ccCode)) {
+            const page = await costCentersApi.list({ search: ccCode, only_active: true, page: 1, perPage: 20 });
+            costCenterCache.set(ccCode, page.items.find((cc) => cc.code.toUpperCase() === ccCode) ?? null);
+          }
+          costCenter = costCenterCache.get(ccCode) ?? null;
+          if (!costCenter) problems.push(`Fila ${line}: centro de costo ${ccCode} no encontrado (se deja vacío)`);
+        }
+        imported.push({
+          ...blankLine(),
+          accountId: account.id,
+          accountCode: account.code,
+          accountName: account.name,
+          description: values.description || account.name.toUpperCase(),
+          unitPrice: Math.round(amount * 100) / 100,
+          costCenterId: costCenter?.id,
+          costCenterCode: costCenter?.code,
+          costCenterName: costCenter?.name,
+        });
+      }
+
+      form.setFieldValue("lines", [...getLines().filter((l) => !isBlankLine(l, kind)), ...imported]);
+      ensureTrailingBlank();
+      schedule();
+      if (problems.length) {
+        modal.warning({
+          title: `Se importaron ${imported.length} línea(s); ${problems.length} con observaciones`,
+          content: (
+            <ul style={{ paddingLeft: 18, margin: 0 }}>
+              {problems.slice(0, 12).map((p) => (
+                <li key={p}>{p}</li>
+              ))}
+            </ul>
+          ),
+        });
+      } else {
+        message.success(`Se importaron ${imported.length} línea(s).`);
+      }
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : "No se pudo leer el archivo.");
+    }
   };
 
   // ---- cambios de cabecera ----------------------------------------------------------------------
@@ -540,8 +644,15 @@ export function PurchaseDocumentForm({ kind, active, onDone, onCancel }: Purchas
       }
     }
 
-    const onSuccess = (purchase: Purchase) => {
+    const onSuccess = async (purchase: Purchase) => {
       message.success(`${SUCCESS_LABEL[kind]} · correlativo ${purchase.registration_code ?? "—"}`);
+      if (pendingFiles.length) {
+        try {
+          await uploadPending(purchase.id, pendingFiles);
+        } catch (error) {
+          message.warning(`La compra se registró, pero no se pudieron subir los archivos: ${ApiError.from(error).message}`);
+        }
+      }
       onDone(purchase);
     };
     const onError = (error: unknown) => {
@@ -609,8 +720,7 @@ export function PurchaseDocumentForm({ kind, active, onDone, onCancel }: Purchas
 
   const payable = preview ? Number(preview.charges.payable) : null;
   const showRetention = kind === "expense" && documentType === FEE_RECEIPT_DOCUMENT;
-  const searchLabel = items ? "<<Buscar Artículos..." : "<<Buscar Cuentas...";
-  const lines = watchedLines ?? [];
+    const lines = watchedLines ?? [];
   const canDelete = selectedLine != null && selectedLine < lines.length && !isBlankLine(lines[selectedLine], kind);
 
   const tabs = [
@@ -623,11 +733,10 @@ export function PurchaseDocumentForm({ kind, active, onDone, onCancel }: Purchas
           form={form}
           kind={kind}
           documentTypeOptions={documentTypeOptions}
-          operationOptions={operationOptions}
           warehouseOptions={warehouseOptions}
-          paymentTermOptions={paymentTermOptions}
           categoryOptions={categoryOptions}
           exchangeRate={preview?.exchangeRate}
+          detractionAmount={preview?.totals.detraction}
           onSupplierChange={onSupplierChange}
         />
       ),
@@ -638,17 +747,11 @@ export function PurchaseDocumentForm({ kind, active, onDone, onCancel }: Purchas
         ? [{ key: "reception", label: "Recepción y reparto", forceRender: true, children: <AllocationTab form={form} preview={preview} /> }]
         : []),
     {
-      key: "payment",
-      label: "Pago",
-      forceRender: true,
-      children: <PaymentTab form={form} accounts={accountsInCurrency} payable={payable} />,
-    },
-    {
-      key: "perception",
-      label: kind === "expense" ? "Percepción / Retención" : "Percepción",
+      key: "additional",
+      label: "Datos Adicionales",
       forceRender: true,
       children: (
-        <PerceptionTab
+        <AdditionalDataTab
           form={form}
           kind={kind}
           preview={preview}
@@ -656,6 +759,35 @@ export function PurchaseDocumentForm({ kind, active, onDone, onCancel }: Purchas
             retentionTouched.current = true;
           }}
         />
+      ),
+    },
+    {
+      key: "payment",
+      label: "Pago",
+      forceRender: true,
+      children: <PaymentTab form={form} accounts={accountsInCurrency} payable={payable} />,
+    },
+    {
+      key: "files",
+      label: `Archivos${pendingFiles.length ? ` (${pendingFiles.length})` : ""}`,
+      children: <AttachmentsPanel pendingFiles={pendingFiles} onPendingFilesChange={setPendingFiles} />,
+    },
+    {
+      key: "info",
+      label: "Datos Informativos",
+      children: (
+        <Descriptions size="small" column={{ xs: 1, md: 2 }} bordered>
+          <Descriptions.Item label="Estado">
+            <Tag color="processing" variant="filled">
+              Nuevo
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Correlativo">Se asigna al aceptar</Descriptions.Item>
+          <Descriptions.Item label="Compañía">{company?.business_name ?? "—"}</Descriptions.Item>
+          <Descriptions.Item label="Usuario">{user?.name || user?.email || "—"}</Descriptions.Item>
+          <Descriptions.Item label="Fecha de registro">{dayjs().format("DD/MM/YYYY HH:mm")}</Descriptions.Item>
+          <Descriptions.Item label="Asiento contable">Se genera al aceptar, según el esquema de enlaces contables</Descriptions.Item>
+        </Descriptions>
       ),
     },
   ];
@@ -721,13 +853,42 @@ export function PurchaseDocumentForm({ kind, active, onDone, onCancel }: Purchas
           <Flex vertical gap={6} style={{ minWidth: 190 }}>
             <Tooltip title="F2">
               <Button icon={<SearchOutlined />} onClick={openSearch}>
-                {searchLabel} (F2)
+                {items ? "<<Buscar Artículos..." : ">>Buscar Cuenta..."} (F2)
               </Button>
             </Tooltip>
-            <Button icon={<DeleteOutlined />} onClick={deleteSelected} disabled={!canDelete}>
-              Eliminar
-            </Button>
-            <Typography.Text type="secondary" style={{ fontSize: 11, maxWidth: 200 }}>
+            <Flex gap={6} wrap>
+              <Button size="small" icon={<PlusOutlined />} onClick={newLine}>
+                Nuevo
+              </Button>
+              <Button size="small" icon={<EditOutlined />} onClick={modifyLine} disabled={!canDelete}>
+                Modificar
+              </Button>
+              <Button size="small" icon={<DeleteOutlined />} onClick={deleteSelected} disabled={!canDelete}>
+                Eliminar
+              </Button>
+            </Flex>
+            <Flex gap={6} align="center">
+              <Tag color="success" variant="filled" style={{ marginInlineEnd: 0 }}>
+                Activo
+              </Tag>
+              {!items && (
+                <Upload
+                  accept=".xlsx,.csv,.txt"
+                  showUploadList={false}
+                  beforeUpload={(file) => {
+                    void importLines(file);
+                    return false;
+                  }}
+                >
+                  <Tooltip title="Excel o CSV con columnas Cuenta, Centro de costo, Importe y Descripción">
+                    <Button size="small" icon={<FileExcelOutlined />}>
+                      Importar...
+                    </Button>
+                  </Tooltip>
+                </Upload>
+              )}
+            </Flex>
+            <Typography.Text type="secondary" style={{ fontSize: 11, maxWidth: 210 }}>
               Digite el {items ? "código del artículo" : "código de cuenta"} y presione Enter.
             </Typography.Text>
           </Flex>
@@ -739,6 +900,7 @@ export function PurchaseDocumentForm({ kind, active, onDone, onCancel }: Purchas
               loading={previewLoading}
               error={previewError}
               showRetention={showRetention}
+              variant={kind === "expense" ? "expense" : "default"}
             />
           </div>
         </Flex>
@@ -751,7 +913,7 @@ export function PurchaseDocumentForm({ kind, active, onDone, onCancel }: Purchas
           <Flex gap={8}>
             <Tooltip title="Recalcular totales (F9)">
               <Button icon={<CalculatorOutlined />} onClick={() => void calculate()} loading={previewLoading}>
-                Calcular (F9)
+                Actualizar (F9)
               </Button>
             </Tooltip>
             <Tooltip title="Registrar el comprobante (F10 o Ctrl+Enter)">

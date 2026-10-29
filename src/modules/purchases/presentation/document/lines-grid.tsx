@@ -2,8 +2,17 @@
 
 import { Form, Input, InputNumber, Select, Table, Tooltip, Typography, type FormInstance, type TableColumnsType } from "antd";
 
+import { CostCenterSelect } from "@/modules/cost-centers/presentation/cost-center-select";
+
 import type { PurchaseKind } from "../../domain/purchase.types";
-import { formatAmount, lineAmount, usesItemLines, type DocumentFormValues, type DocumentLineValues } from "./document-model";
+import {
+  formatAmount,
+  lineAmount,
+  lineTax,
+  usesItemLines,
+  type DocumentFormValues,
+  type DocumentLineValues,
+} from "./document-model";
 import styles from "./document.module.css";
 
 interface Option {
@@ -36,7 +45,8 @@ export function lineCellId(formName: string, index: number, field: keyof Documen
 /**
  * Grilla de detalle editable (estilo "Detalle" de SiempreSoft).
  * Mercadería: Código | Descripción | UM | Cantidad | Precio | Importe | Operación | Almacén.
- * Gastos / costo adicional: Cuenta | Nombre | Descripción | Importe | Operación.
+ * Gastos: Cód. Cuenta | Descripción Cuenta | Centro Costo | Descripción CC | Importe | Importe Afecto | Impuesto.
+ * Costo adicional: además Descripción y Operación por línea.
  */
 export function LinesGrid({
   form,
@@ -48,7 +58,8 @@ export function LinesGrid({
   onSelect,
   onCodeCommit,
 }: LinesGridProps) {
-  const lines = (Form.useWatch("lines", form) ?? []) as DocumentLineValues[];
+  // preserve: incluye los datos de la fila que no tienen campo propio (nombre de cuenta, centro de costo…).
+  const lines = (Form.useWatch("lines", { form, preserve: true }) ?? []) as DocumentLineValues[];
   const items = usesItemLines(kind);
 
   const codeField: keyof DocumentLineValues = items ? "productCode" : "accountCode";
@@ -175,33 +186,81 @@ export function LinesGrid({
     },
   ];
 
+  const pricesIncludeTax = Form.useWatch("pricesIncludeTax", form) ?? true;
+  const igvRate = Form.useWatch("igvRate", form) ?? 18;
+  const headerOperation = Form.useWatch("defaultOperationType", form);
+  const taxOf = (index: number) =>
+    lineTax(
+      lineAmount(lines[index], kind),
+      operationLocked ? "non_taxed" : kind === "expense" ? headerOperation : lines[index]?.operationType,
+      pricesIncludeTax,
+      igvRate,
+    );
+
+  // Columnas del detalle de gastos como en SiempreSoft: Cód. Cuenta | Descripción Cuenta | Centro Costo | Descripción CC
+  // | Importe | Importe Afecto | Impuesto. La operación es la de la cabecera.
   const accountColumns: TableColumnsType<FieldRow> = [
     rowNumber,
-    codeColumn,
+    { ...codeColumn, title: "Cód. Cuenta", width: 110 },
     {
-      title: "Nombre cuenta",
+      title: "Descripción Cuenta",
       key: "accountName",
-      width: 180,
+      width: 200,
       render: (_, field) => {
         const text = lines[field.name]?.accountName;
         return (
           <Tooltip title={text}>
-            <Typography.Text type="secondary" className={styles.readonlyCell}>
-              {text ?? ""}
-            </Typography.Text>
+            <span className={styles.readonlyCell}>{text ?? ""}</span>
           </Tooltip>
         );
       },
     },
     {
-      title: "Descripción",
-      key: "description",
+      title: "Centro Costo",
+      key: "costCenterId",
+      width: 130,
       render: (_, field) => (
-        <Form.Item name={[field.name, "description"]}>
-          <Input size="small" maxLength={250} />
+        <Form.Item name={[field.name, "costCenterId"]}>
+          <CostCenterSelect
+            size="small"
+            allowClear
+            placeholder="CC"
+            popupMatchSelectWidth={280}
+            labelRender={() => lines[field.name]?.costCenterCode ?? ""}
+            onSelectCostCenter={(cc) => {
+              form.setFieldValue(["lines", field.name, "costCenterCode"], cc.code);
+              form.setFieldValue(["lines", field.name, "costCenterName"], cc.name);
+            }}
+            onChange={(value) => {
+              form.setFieldValue(["lines", field.name, "costCenterId"], value ?? undefined);
+              if (!value) {
+                form.setFieldValue(["lines", field.name, "costCenterCode"], undefined);
+                form.setFieldValue(["lines", field.name, "costCenterName"], undefined);
+              }
+            }}
+          />
         </Form.Item>
       ),
     },
+    {
+      title: "Descripción CC",
+      key: "costCenterName",
+      width: 160,
+      render: (_, field) => <span className={styles.readonlyCell}>{lines[field.name]?.costCenterName ?? ""}</span>,
+    },
+    ...(kind === "expense"
+      ? []
+      : [
+          {
+            title: "Descripción",
+            key: "description",
+            render: (_: unknown, field: FieldRow) => (
+              <Form.Item name={[field.name, "description"]}>
+                <Input size="small" maxLength={250} />
+              </Form.Item>
+            ),
+          },
+        ]),
     {
       title: "Importe",
       key: "unitPrice",
@@ -212,7 +271,29 @@ export function LinesGrid({
         </Form.Item>
       ),
     },
-    operationColumn,
+    {
+      title: "Importe Afecto",
+      key: "taxable",
+      width: 120,
+      align: "right",
+      render: (_, field) => (
+        <span className={styles.readonlyCell} style={{ textAlign: "right" }}>
+          {formatAmount(taxOf(field.name).taxable)}
+        </span>
+      ),
+    },
+    {
+      title: "Impuesto",
+      key: "tax",
+      width: 110,
+      align: "right",
+      render: (_, field) => (
+        <span className={styles.readonlyCell} style={{ textAlign: "right" }}>
+          {formatAmount(taxOf(field.name).tax)}
+        </span>
+      ),
+    },
+    ...(kind === "expense" ? [] : [operationColumn]),
   ];
 
   return (
@@ -226,7 +307,7 @@ export function LinesGrid({
           rowKey="key"
           dataSource={fields.map(({ key, name }) => ({ key, name }))}
           columns={items ? itemColumns : accountColumns}
-          scroll={{ y: 230, x: items ? 1000 : 900 }}
+          scroll={{ y: 230, x: items ? 1000 : 1060 }}
           rowClassName={(_, index) => (index === selectedIndex ? styles.selectedRow : "")}
           onRow={(_, index) => ({
             onClick: () => onSelect(index ?? 0),

@@ -25,10 +25,20 @@ interface DocumentTotalsProps {
   loading: boolean;
   error: string | null;
   showRetention: boolean;
+  /** Distribución del comprobante de gasto de SiempreSoft. */
+  variant?: "default" | "expense";
 }
 
 /** Bloque de totales con los nombres de SiempreSoft. */
-export function DocumentTotals({ preview, linesTotal, currency, loading, error, showRetention }: DocumentTotalsProps) {
+export function DocumentTotals({
+  preview,
+  linesTotal,
+  currency,
+  loading,
+  error,
+  showRetention,
+  variant = "default",
+}: DocumentTotalsProps) {
   const t = preview ? siempreSoftTotals(preview.totals) : null;
   const c = preview?.charges;
   const v = (n: number | string | undefined) => (n == null ? "—" : formatAmount(n));
@@ -36,6 +46,41 @@ export function DocumentTotals({ preview, linesTotal, currency, loading, error, 
 
   return (
     <div className={styles.totalsBox}>
+      {variant === "expense" ? (
+        <Row gutter={[24, 2]}>
+          <Col xs={24} md={{ span: 8, offset: 16 }}>
+            <TotalRow label="Inicial" value={formatAmount(0)} />
+          </Col>
+          <Col xs={24} md={{ span: 8, offset: 8 }}>
+            <TotalRow label="Importe Retención" value={c ? v(c.retention) : formatAmount(0)} />
+          </Col>
+          <Col xs={24} md={8}>
+            <TotalRow label="Importe Detracción" value={preview ? v(preview.totals.detraction) : formatAmount(0)} />
+          </Col>
+          <Col xs={24} md={8}>
+            <TotalRow label="Valor Compra" value={v(t?.valorCompra)} strong />
+          </Col>
+          <Col xs={24} md={8}>
+            <TotalRow label="Impuesto" value={v(t?.igv)} strong />
+          </Col>
+          <Col xs={24} md={8}>
+            <TotalRow label="Importe Total" value={t ? v(t.precioCompra) : formatAmount(linesTotal)} strong />
+          </Col>
+          {(Number(c?.perception ?? 0) > 0 || Number(c?.retention ?? 0) > 0 || foreign) && (
+            <>
+              <Col xs={24} md={8}>
+                {Number(c?.perception ?? 0) > 0 && <TotalRow label="Percepción" value={v(c?.perception)} />}
+              </Col>
+              <Col xs={24} md={8}>
+                {foreign && <TotalRow label="Importe Total S/" value={v(preview?.totals.total_pen)} />}
+              </Col>
+              <Col xs={24} md={8}>
+                <TotalRow label={`Neto a pagar ${currency === "PEN" ? "S/" : currency}`} value={v(c?.payable)} strong />
+              </Col>
+            </>
+          )}
+        </Row>
+      ) : (
       <Row gutter={[24, 2]}>
         <Col xs={24} md={8}>
           <TotalRow label="Importe Afecto" value={v(t?.importeAfecto)} />
@@ -61,6 +106,7 @@ export function DocumentTotals({ preview, linesTotal, currency, loading, error, 
           {foreign && <TotalRow label="Neto a pagar S/" value={v(c?.payable_pen)} />}
         </Col>
       </Row>
+      )}
       <div style={{ minHeight: 20, marginTop: 4 }}>
         {loading ? (
           <Typography.Text type="secondary" style={{ fontSize: 12 }}>
@@ -80,7 +126,7 @@ export function DocumentTotals({ preview, linesTotal, currency, loading, error, 
           </Typography.Text>
         ) : (
           <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            Los totales se calculan al completar las líneas (o con Calcular F9).
+            Los totales se calculan al completar las líneas (o con Actualizar F9).
           </Typography.Text>
         )}
       </div>
