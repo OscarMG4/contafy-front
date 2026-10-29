@@ -33,7 +33,7 @@ export function PurchaseOrdersView() {
   const { company } = useActiveCompany();
   const canWrite = WRITE_ROLES.has(user?.role ?? "");
 
-  const [statuses, setStatuses] = useState<PurchaseOrderStatus[]>(["open", "partial"]);
+  const [statuses, setStatuses] = useState<PurchaseOrderStatus[]>([]);
   const [filters, setFilters] = useState<Omit<PurchaseOrderFilters, "status">>({ page: 1, perPage: 15 });
   const [formOpen, setFormOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
